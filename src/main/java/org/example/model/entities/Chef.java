@@ -1,99 +1,176 @@
 package org.example.model.entities;
 
-import org.example.model.enums.ChefState;
-import org.example.model.enums.Direction;
+import org.example.model.enums.PlayerState;
 import org.example.model.items.Item;
+import org.example.model.map.Direction;
 import org.example.model.map.Position;
-import org.example.model.map.Map;
 
-
-public class Chef {
+/**
+ * Kelas Chef yang merepresentasikan karakter pemain
+ * Chef bisa bergerak, mengambil item, dan berinteraksi dengan station
+ */
+public class Chef extends GameObject {
     private String id;
     private String name;
-    private Position position;
     private Direction direction;
     private Item inventory;
-    private ChefState state;
+    private PlayerState state;
     private Boolean isActive;
 
+    // Constructor
     public Chef(String id, String name, Position position) {
+        super(position);
         this.id = id;
         this.name = name;
-        this.position = position;
         this.direction = Direction.DOWN;
-        this.state = ChefState.IDLE;
+        this.state = PlayerState.IDLE;
         this.inventory = null;
         this.isActive = false;
     }
+
+    public Chef(String id, String name, int x, int y) {
+        super(x, y);
+        this.id = id;
+        this.name = name;
+        this.direction = Direction.DOWN;
+        this.state = PlayerState.IDLE;
+        this.inventory = null;
+        this.isActive = false;
+    }
+
+    // Method untuk menggerakkan chef
     public void move(Direction direction) {
-        this.direction = direction;
-        //tambahkan logika update position
-    }
-    public void pickUpItem(Item item){
-        if(!isHoldingItem()){
-            this.inventory = item;
-        }else{
+        if (direction == null)
             return;
+
+        this.direction = direction;
+        this.state = PlayerState.MOVING;
+        this.position.translate(direction.getDx(), direction.getDy());
+    }
+
+    // Method untuk mencoba bergerak (cek arah dulu)
+    public boolean tryMove(Direction direction, int mapWidth, int mapHeight) {
+        if (direction == null)
+            return false;
+
+        // Jika belum menghadap arah tersebut, hanya ubah arah
+        if (!this.direction.equals(direction)) {
+            this.direction = direction;
+            return false;
         }
-    }
-    public Item dropItem(){
-       //lengkapi kode ini
-       // Kembalikan item di tangan,lalu set inventory jadi null
-    }
-    public void interactStation(Station station){
-        //lengkapi kode ini
-        //lakukan polymorphism dengan memanggil station.interact(this)
-    }
-    public Tile getFrontTile(Map gameMap){
-        //lengkapi kode ini
-        // hitung koordinat depan berdasarkan direction & position saat ini
-    }
-    public boolean isBusy(){
+
+        // Cek batas map
+        int newX = this.position.getX() + direction.getDx();
+        int newY = this.position.getY() + direction.getDy();
+
+        if (newX >= 0 && newX < mapWidth && newY >= 0 && newY < mapHeight) {
+            this.state = PlayerState.MOVING;
+            this.position.translate(direction.getDx(), direction.getDy());
+            return true;
+        }
+
         return false;
     }
+
+    // Method untuk mengambil item
+    public void pickUpItem(Item item) {
+        if (!isHoldingItem() && item != null) {
+            this.inventory = item;
+            this.state = PlayerState.HOLDING_ITEM;
+        }
+    }
+
+    // Method untuk meletakkan item
+    public Item dropItem() {
+        if (isHoldingItem()) {
+            Item droppedItem = this.inventory;
+            this.inventory = null;
+            this.state = PlayerState.IDLE;
+            return droppedItem;
+        }
+        return null;
+    }
+
+    // Method untuk interaksi dengan station
+    public void interactStation(Station station) {
+        if (station != null) {
+            station.interact(this);
+        }
+    }
+
+    // Method untuk mendapatkan posisi di depan chef
+    public Position getFrontPosition() {
+        int frontX = this.position.getX() + this.direction.getDx();
+        int frontY = this.position.getY() + this.direction.getDy();
+        return new Position(frontX, frontY);
+    }
+
+    // Cek apakah chef sedang sibuk
+    public boolean isBusy() {
+        return this.state == PlayerState.COOKING || this.state == PlayerState.CUTTING;
+    }
+
+    // Set state ke IDLE
+    public void setIdle() {
+        this.state = PlayerState.IDLE;
+    }
+
+    // Cek apakah sedang memegang item
+    public boolean isHoldingItem() {
+        return this.inventory != null;
+    }
+
+    // Getter dan Setter
     public String getId() {
         return id;
     }
+
     public void setId(String id) {
         this.id = id;
     }
-    public String getName(){
+
+    public String getName() {
         return name;
     }
-    public void setName(String name){
+
+    public void setName(String name) {
         this.name = name;
     }
-    public Position getPosition(){
-        return position;
-    }
-    public void setPosition(Position position){
-        this.position = position;
-    }
-    public Direction getDirection(){
+
+    public Direction getDirection() {
         return direction;
     }
-    public void setDirection(Direction direction){
+
+    public void setDirection(Direction direction) {
         this.direction = direction;
     }
-    public ChefState getState(){
+
+    public PlayerState getState() {
         return state;
     }
-    public void setState(ChefState state){
+
+    public void setState(PlayerState state) {
         this.state = state;
     }
-    public Item getInventory(){
+
+    public Item getInventory() {
         return inventory;
     }
-    public void setInventory(Item inventory){
+
+    public void setInventory(Item inventory) {
         this.inventory = inventory;
     }
-    public void setIsActive(Boolean isActive){
-        this.isActive = isActive;
-    }
-    public Boolean getIsActive(){
+
+    public Boolean getIsActive() {
         return isActive;
     }
-    public boolean isHoldingItem(){
-        return this.inventory != null;
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    @Override
+    public String toString() {
+        return "Chef[" + name + " at " + position + "]";
     }
 }
