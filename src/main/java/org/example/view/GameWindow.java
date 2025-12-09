@@ -6,7 +6,7 @@ import org.example.model.enums.Key;
 import org.example.model.enums.TileType;
 import org.example.model.input.InputHandler;
 import org.example.model.map.Direction;
-import org.example.model.map.GameMap;
+import org.example.model.map.Map;
 import org.example.model.map.Position;
 import org.example.model.map.Tile;
 
@@ -28,20 +28,20 @@ public class GameWindow extends JPanel implements KeyListener {
     // Game objects
     private List<Chef> chefs;
     private int activeChefIndex;
-    private GameMap gameMap;
+    private Map Map;
     private InputHandler inputHandler;
     private JFrame frame;
 
     public GameWindow() {
         // Inisialisasi map
-        this.gameMap = new GameMap();
+        this.Map = new Map();
 
         // Inisialisasi chefs
         this.chefs = new ArrayList<>();
         this.activeChefIndex = 0;
 
         // Ambil spawn points dari map
-        List<Position> spawnPoints = gameMap.getSpawnPoints();
+        List<Position> spawnPoints = Map.getSpawnPoints();
 
         // Buat Chef 1
         Position spawn1 = spawnPoints.size() > 0 ? spawnPoints.get(0) : new Position(1, 1);
@@ -58,8 +58,8 @@ public class GameWindow extends JPanel implements KeyListener {
         this.inputHandler = new InputHandler();
 
         // Setup panel
-        int panelWidth = gameMap.getWidth() * TILE_SIZE;
-        int panelHeight = gameMap.getHeight() * TILE_SIZE + 100;
+        int panelWidth = Map.getWidth() * TILE_SIZE;
+        int panelHeight = Map.getHeight() * TILE_SIZE + 100;
         setPreferredSize(new Dimension(panelWidth, panelHeight));
         setBackground(new Color(30, 30, 30));
         setFocusable(true);
@@ -76,7 +76,7 @@ public class GameWindow extends JPanel implements KeyListener {
         frame.setVisible(true);
 
         // Print map untuk debug
-        gameMap.printMap();
+        Map.printMap();
         System.out.println("Spawn points: " + spawnPoints);
 
         requestFocusInWindow();
@@ -113,9 +113,9 @@ public class GameWindow extends JPanel implements KeyListener {
 
     // Gambar map
     private void drawMap(Graphics2D g) {
-        for (int x = 0; x < gameMap.getWidth(); x++) {
-            for (int y = 0; y < gameMap.getHeight(); y++) {
-                Tile tile = gameMap.getTile(x, y);
+        for (int x = 0; x < Map.getWidth(); x++) {
+            for (int y = 0; y < Map.getHeight(); y++) {
+                Tile tile = Map.getTile(x, y);
                 drawTile(g, tile, x, y);
             }
         }
@@ -315,12 +315,12 @@ public class GameWindow extends JPanel implements KeyListener {
 
     // Gambar info bar
     private void drawInfo(Graphics2D g) {
-        int infoY = gameMap.getHeight() * TILE_SIZE;
+        int infoY = Map.getHeight() * TILE_SIZE;
         Chef activeChef = getActiveChef();
 
         // Background
         g.setColor(new Color(30, 30, 30));
-        g.fillRect(0, infoY, gameMap.getWidth() * TILE_SIZE, 100);
+        g.fillRect(0, infoY, Map.getWidth() * TILE_SIZE, 100);
 
         // Info chef
         g.setColor(Color.YELLOW);
@@ -334,7 +334,7 @@ public class GameWindow extends JPanel implements KeyListener {
                 infoY + 38);
 
         // Tile saat ini
-        Tile currentTile = gameMap.getTile(activeChef.getPosition());
+        Tile currentTile = Map.getTile(activeChef.getPosition());
         if (currentTile != null) {
             g.setColor(new Color(100, 200, 100));
             g.drawString("Standing on: " + currentTile.getType().getDisplayName(), 10, infoY + 55);
@@ -404,7 +404,7 @@ public class GameWindow extends JPanel implements KeyListener {
             // Cek arah dulu
             if (!activeChef.getDirection().equals(dir)) {
                 activeChef.setDirection(dir);
-            } else if (gameMap.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
+            } else if (Map.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
                 activeChef.move(dir);
             }
         } else {
