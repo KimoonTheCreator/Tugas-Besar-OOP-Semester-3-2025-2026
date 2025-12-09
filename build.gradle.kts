@@ -1,7 +1,8 @@
 plugins {
-    id("java")
+    java
     application
-    id 'org.openjfx.javafxplugin' version '0.1.0' 
+
+    id("org.openjfx.javafxplugin") version "0.1.0" 
 }
 
 group = "org.example"
@@ -13,7 +14,7 @@ repositories {
 
 javafx {
     version = "21"
-    modules = [ 'javafx.controls', 'javafx.fxml' ]
+    modules = listOf("javafx.controls", "javafx.fxml") 
 }
 
 dependencies {
@@ -23,7 +24,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.example.Main") 
+    mainClass.set("org.example.Main")
 }
 
 tasks.test {
