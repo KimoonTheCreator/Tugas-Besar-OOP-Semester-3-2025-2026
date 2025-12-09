@@ -1,6 +1,6 @@
 package org.example.model.interfaces;
 
-public interface Prepareable{
+public interface Preparable {
     boolean canBeChopped();
     boolean canBeCooked();
     boolean canBePlacedOnPlate();

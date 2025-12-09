@@ -5,6 +5,7 @@ import org.example.model.enums.Direction;
 import org.example.model.items.Item;
 import org.example.model.map.Position;
 import org.example.model.map.Map;
+import org.example.model.stations.Station;
 
 
 public class Chef {
