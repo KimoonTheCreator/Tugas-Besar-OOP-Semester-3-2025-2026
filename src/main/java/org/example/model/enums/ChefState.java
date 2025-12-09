@@ -1,9 +1,13 @@
 package org.example.model.enums;
 
+/**
+ * Enum untuk status chef
+ */
 public enum ChefState {
-    IDLE,
-    COOKING,
-    INTERACT,
-    MOVE,
-    CUTTING
+    IDLE, // Diam
+    MOVE, // Bergerak
+    HOLDING_ITEM, // Membawa item
+    COOKING, // Memasak
+    CUTTING, // Memotong
+    INTERACT // Interaksi
 }

@@ -1,6 +1,6 @@
 package org.example.model.entities;
 
-import org.example.model.enums.PlayerState;
+import org.example.model.enums.ChefState;
 import org.example.model.items.Item;
 import org.example.model.map.Direction;
 import org.example.model.map.Position;
@@ -14,7 +14,7 @@ public class Chef extends GameObject {
     private String name;
     private Direction direction;
     private Item inventory;
-    private PlayerState state;
+    private ChefState state;
     private Boolean isActive;
 
     // Constructor
@@ -23,7 +23,7 @@ public class Chef extends GameObject {
         this.id = id;
         this.name = name;
         this.direction = Direction.DOWN;
-        this.state = PlayerState.IDLE;
+        this.state = ChefState.IDLE;
         this.inventory = null;
         this.isActive = false;
     }
@@ -33,7 +33,7 @@ public class Chef extends GameObject {
         this.id = id;
         this.name = name;
         this.direction = Direction.DOWN;
-        this.state = PlayerState.IDLE;
+        this.state = ChefState.IDLE;
         this.inventory = null;
         this.isActive = false;
     }
@@ -44,7 +44,7 @@ public class Chef extends GameObject {
             return;
 
         this.direction = direction;
-        this.state = PlayerState.MOVING;
+        this.state = ChefState.MOVE;
         this.position.translate(direction.getDx(), direction.getDy());
     }
 
@@ -64,7 +64,7 @@ public class Chef extends GameObject {
         int newY = this.position.getY() + direction.getDy();
 
         if (newX >= 0 && newX < mapWidth && newY >= 0 && newY < mapHeight) {
-            this.state = PlayerState.MOVING;
+            this.state = ChefState.MOVE;
             this.position.translate(direction.getDx(), direction.getDy());
             return true;
         }
@@ -76,7 +76,7 @@ public class Chef extends GameObject {
     public void pickUpItem(Item item) {
         if (!isHoldingItem() && item != null) {
             this.inventory = item;
-            this.state = PlayerState.HOLDING_ITEM;
+            this.state = ChefState.HOLDING_ITEM;
         }
     }
 
@@ -85,7 +85,7 @@ public class Chef extends GameObject {
         if (isHoldingItem()) {
             Item droppedItem = this.inventory;
             this.inventory = null;
-            this.state = PlayerState.IDLE;
+            this.state = ChefState.IDLE;
             return droppedItem;
         }
         return null;
@@ -107,12 +107,12 @@ public class Chef extends GameObject {
 
     // Cek apakah chef sedang sibuk
     public boolean isBusy() {
-        return this.state == PlayerState.COOKING || this.state == PlayerState.CUTTING;
+        return this.state == ChefState.COOKING || this.state == ChefState.CUTTING;
     }
 
     // Set state ke IDLE
     public void setIdle() {
-        this.state = PlayerState.IDLE;
+        this.state = ChefState.IDLE;
     }
 
     // Cek apakah sedang memegang item
@@ -145,11 +145,11 @@ public class Chef extends GameObject {
         this.direction = direction;
     }
 
-    public PlayerState getState() {
+    public ChefState getState() {
         return state;
     }
 
-    public void setState(PlayerState state) {
+    public void setState(ChefState state) {
         this.state = state;
     }
 
