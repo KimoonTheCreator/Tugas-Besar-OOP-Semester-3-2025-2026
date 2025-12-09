@@ -1,8 +1,11 @@
 package org.example.model.map;
 
 import org.example.model.enums.TileType;
+import org.example.model.stations.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Kelas GameMap untuk mengelola peta permainan
@@ -12,6 +15,7 @@ public class GameMap {
     private int width;
     private int height;
     private List<Position> spawnPoints;
+    private Map<Position, Station> stations; // Map posisi -> station
 
     // Layout map default (14 kolom x 10 baris)
     private static final String[] DEFAULT_MAP = {
@@ -36,10 +40,11 @@ public class GameMap {
         this.width = mapLayout[0].length();
         this.tiles = new Tile[width][height];
         this.spawnPoints = new ArrayList<>();
+        this.stations = new HashMap<>();
         parseMap(mapLayout);
     }
 
-    // Parse string map menjadi array Tile
+    // Parse string map menjadi array Tile dan buat stations
     private void parseMap(String[] mapLayout) {
         for (int y = 0; y < height; y++) {
             String row = mapLayout[y];
@@ -47,17 +52,66 @@ public class GameMap {
                 char symbol = row.charAt(x);
                 TileType type = TileType.fromSymbol(symbol);
                 tiles[x][y] = new Tile(type, x, y);
+                Position pos = new Position(x, y);
 
                 // Simpan spawn point
                 if (type == TileType.SPAWN_POINT) {
-                    spawnPoints.add(new Position(x, y));
+                    spawnPoints.add(pos);
                 }
+
+                // Buat station berdasarkan tipe tile
+                createStationForTile(type, pos);
             }
             // Isi sisa dengan wall jika row lebih pendek
             for (int x = row.length(); x < width; x++) {
                 tiles[x][y] = new Tile(TileType.WALL, x, y);
             }
         }
+    }
+
+    // Buat station berdasarkan tipe tile
+    private void createStationForTile(TileType type, Position pos) {
+        Station station = null;
+        switch (type) {
+            case CUTTING_STATION:
+                station = new CuttingStation("Cutting Station", pos);
+                break;
+            case INGREDIENT_STORAGE:
+                station = new IngredientStorage("Ingredient Storage", pos, "Tomato");
+                break;
+            case ASSEMBLY_STATION:
+                station = new AssemblyStation("Assembly Station", pos);
+                break;
+            // TODO: Tambah station lain sesuai kebutuhan
+            // case COOKING_STATION:
+            // case SERVING_COUNTER:
+            // case WASHING_STATION:
+            // case PLATE_STORAGE:
+            // case TRASH_STATION:
+        }
+        if (station != null) {
+            stations.put(pos, station);
+        }
+    }
+
+    // Dapatkan station pada posisi tertentu
+    public Station getStation(int x, int y) {
+        return getStation(new Position(x, y));
+    }
+
+    public Station getStation(Position pos) {
+        // Cari station berdasarkan posisi
+        for (Map.Entry<Position, Station> entry : stations.entrySet()) {
+            if (entry.getKey().getX() == pos.getX() && entry.getKey().getY() == pos.getY()) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    // Cek apakah ada station di posisi
+    public boolean hasStation(int x, int y) {
+        return getStation(x, y) != null;
     }
 
     // Dapatkan tile pada posisi tertentu
@@ -108,6 +162,10 @@ public class GameMap {
         return height;
     }
 
+    public Map<Position, Station> getStations() {
+        return stations;
+    }
+
     // Print map untuk debug
     public void printMap() {
         System.out.println("Map (" + width + "x" + height + "):");
@@ -117,5 +175,6 @@ public class GameMap {
             }
             System.out.println();
         }
+        System.out.println("Total stations: " + stations.size());
     }
 }

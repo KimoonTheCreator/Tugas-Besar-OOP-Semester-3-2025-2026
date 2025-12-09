@@ -17,7 +17,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.example.view.GameWindow")
+    mainClass.set("org.example.Main")
 }
 
 tasks.test {

@@ -1,6 +1,6 @@
 package org.example;
 
-import org.example.view.GameWindow;
+import org.example.view.MainMenu;
 import javax.swing.SwingUtilities;
 
 /**
@@ -9,9 +9,9 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
     public static void main(String[] args) {
-        // Jalankan game window
+        // Jalankan main menu terlebih dahulu
         SwingUtilities.invokeLater(() -> {
-            new GameWindow();
+            new MainMenu();
         });
     }
 }

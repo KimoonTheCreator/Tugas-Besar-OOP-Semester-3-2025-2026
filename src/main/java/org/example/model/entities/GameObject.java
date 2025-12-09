@@ -1,5 +1,4 @@
 package org.example.model.entities;
-
 import org.example.model.map.Position;
 
 /**

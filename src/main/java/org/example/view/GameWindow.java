@@ -9,6 +9,7 @@ import org.example.model.map.Direction;
 import org.example.model.map.GameMap;
 import org.example.model.map.Position;
 import org.example.model.map.Tile;
+import org.example.model.stations.Station;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +68,7 @@ public class GameWindow extends JPanel implements KeyListener {
         addKeyListener(this);
 
         // Setup frame
-        frame = new JFrame("Cooking Game - WASD: Move | TAB: Switch Chef | ESC: Exit");
+        frame = new JFrame("Cooking Game - WASD: Move | TAB: Switch Chef | M: Menu");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(this);
         frame.pack();
@@ -342,8 +343,9 @@ public class GameWindow extends JPanel implements KeyListener {
 
         // Kontrol
         g.setColor(new Color(120, 120, 120));
-        g.setFont(new Font("Consolas", Font.PLAIN, 11));
-        g.drawString("WASD=Move | TAB=Switch | E=Interact | V=Pickup | ESC=Exit", 10, infoY + 75);
+        g.setFont(new Font("Consolas", Font.PLAIN, 10));
+        g.drawString("WASD=Move | Q=Pickup | F=Drop | C=Cut | X=Wash | R=Cook | E=Interact | TAB=Switch | M=Menu", 10,
+                infoY + 75);
     }
 
     // Konversi KeyEvent ke enum Key
@@ -359,6 +361,16 @@ public class GameWindow extends JPanel implements KeyListener {
                 return Key.D;
             case KeyEvent.VK_E:
                 return Key.E;
+            case KeyEvent.VK_Q:
+                return Key.Q;
+            case KeyEvent.VK_F:
+                return Key.F;
+            case KeyEvent.VK_C:
+                return Key.C;
+            case KeyEvent.VK_X:
+                return Key.X;
+            case KeyEvent.VK_R:
+                return Key.R;
             case KeyEvent.VK_V:
                 return Key.V;
             case KeyEvent.VK_P:
@@ -382,9 +394,10 @@ public class GameWindow extends JPanel implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            System.out.println("Game closed!");
-            System.exit(0);
+        // M atau ESC untuk buka menu
+        if (e.getKeyCode() == KeyEvent.VK_M || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            openInGameMenu();
+            return;
         }
 
         Key key = convertKey(e);
@@ -396,6 +409,22 @@ public class GameWindow extends JPanel implements KeyListener {
 
         if (command == Command.SWITCH_CHEF) {
             switchChef();
+        } else if (command == Command.INTERACT) {
+            // Interaksi dengan station di depan chef
+            handleInteract(activeChef);
+        } else if (command == Command.PICKUP) {
+            handlePickup(activeChef);
+        } else if (command == Command.DROP) {
+            handleDrop(activeChef);
+        } else if (command == Command.PICKUP_DROP) {
+            // Legacy handling
+            if (activeChef.isHoldingItem())
+                handleDrop(activeChef);
+            else
+                handlePickup(activeChef);
+        } else if (command == Command.CUT || command == Command.WASH || command == Command.COOK) {
+            // Action specific stations
+            handleStationAction(activeChef, command);
         } else if (inputHandler.isMovementCommand(command)) {
             Direction dir = inputHandler.getDirectionFromCommand(command);
             int newX = activeChef.getX() + dir.getDx();
@@ -407,11 +436,72 @@ public class GameWindow extends JPanel implements KeyListener {
             } else if (gameMap.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
                 activeChef.move(dir);
             }
-        } else {
-            System.out.println("Command: " + command);
         }
 
         repaint();
+    }
+
+    // Handle interaksi dengan station
+    private void handleInteract(Chef chef) {
+        Position frontPos = chef.getFrontPosition();
+        Station station = gameMap.getStation(frontPos);
+
+        if (station != null) {
+            System.out.println(chef.getName() + " berinteraksi dengan " + station.getName());
+            station.interact(chef);
+        } else {
+            Tile frontTile = gameMap.getTile(frontPos);
+            if (frontTile != null) {
+                System.out.println("Tidak ada station di depan. Tile: " + frontTile.getType().getDisplayName());
+            }
+        }
+    }
+
+    // Handle pickup item
+    private void handlePickup(Chef chef) {
+        Position frontPos = chef.getFrontPosition();
+        Station station = gameMap.getStation(frontPos);
+
+        if (!chef.isHoldingItem()) {
+            if (station != null && !station.isEmpty()) {
+                chef.pickUpItem(station.takeItem());
+                System.out.println(chef.getName() + " mengambil item dari " + station.getName());
+            } else {
+                System.out.println("Tidak ada item untuk diambil!");
+            }
+        } else {
+            System.out.println("Tangan penuh!");
+        }
+    }
+
+    // Handle drop item
+    private void handleDrop(Chef chef) {
+        Position frontPos = chef.getFrontPosition();
+        Station station = gameMap.getStation(frontPos);
+
+        if (chef.isHoldingItem()) {
+            if (station != null && station.isEmpty()) {
+                station.addItem(chef.dropItem());
+                System.out.println(chef.getName() + " menaruh item di " + station.getName());
+            } else {
+                System.out.println("Tidak bisa menaruh item di sini!");
+            }
+        } else {
+            System.out.println("Tangan kosong!");
+        }
+    }
+
+    // Handle station specific actions
+    private void handleStationAction(Chef chef, Command command) {
+        Position frontPos = chef.getFrontPosition();
+        Station station = gameMap.getStation(frontPos);
+
+        if (station != null) {
+            // Validasi command dengan tipe station di sini nanti
+            // Untuk sekarang kita treat sebagai interaksi biasa tapi dengan intent spesifik
+            System.out.println("Melakukan aksi " + command + " pada " + station.getName());
+            station.interact(chef);
+        }
     }
 
     @Override
@@ -422,6 +512,27 @@ public class GameWindow extends JPanel implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
+    }
+
+    // Buka in-game menu
+    private void openInGameMenu() {
+        InGameMenu menu = new InGameMenu(
+                frame,
+                () -> {
+                    // Resume callback - just request focus back
+                    requestFocusInWindow();
+                },
+                () -> {
+                    // Return to main menu callback
+                    returnToMainMenu();
+                });
+        menu.setVisible(true);
+    }
+
+    // Kembali ke main menu
+    private void returnToMainMenu() {
+        frame.dispose();
+        SwingUtilities.invokeLater(() -> new MainMenu());
     }
 
     public static void main(String[] args) {
