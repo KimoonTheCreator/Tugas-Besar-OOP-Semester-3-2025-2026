@@ -50,4 +50,13 @@ public class Position {
     public String toString() {
         return "(" + x + ", " + y + ")";
     }
+
+    public Position getFacingPosition(Direction dir) {
+        // Menggunakan dx dan dy dari objek Direction untuk menghitung posisi baru
+        int facingX = this.x + dir.getDx();
+        int facingY = this.y + dir.getDy();
+        
+        // Mengembalikan objek Position baru
+        return new Position(facingX, facingY);
+    }
 }
