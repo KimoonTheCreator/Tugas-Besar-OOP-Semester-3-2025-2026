@@ -21,6 +21,7 @@ public enum Key {
     // System
     TAB, // Switch chef
     P, // Pause
+    SPACE, // Dash/Action
 
     // Legacy (untuk backward compatibility)
     V // Pickup/Drop (old)

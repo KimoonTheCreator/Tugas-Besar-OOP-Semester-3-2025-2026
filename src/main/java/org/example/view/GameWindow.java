@@ -1,21 +1,17 @@
 package org.example.view;
 
+import org.example.controller.GameController;
 import org.example.model.entities.Chef;
-import org.example.model.enums.Command;
 import org.example.model.enums.Key;
 import org.example.model.enums.TileType;
-import org.example.model.input.InputHandler;
 import org.example.model.map.Direction;
 import org.example.model.map.GameMap;
-import org.example.model.map.Position;
 import org.example.model.map.Tile;
-import org.example.model.stations.Station;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,37 +22,14 @@ public class GameWindow extends JPanel implements KeyListener {
 
     private static final int TILE_SIZE = 50;
 
-    // Game objects
-    private List<Chef> chefs;
-    private int activeChefIndex;
-    private GameMap gameMap;
-    private InputHandler inputHandler;
+    // Controller
+    private GameController controller;
     private JFrame frame;
 
     public GameWindow() {
-        // Inisialisasi map
-        this.gameMap = new GameMap();
-
-        // Inisialisasi chefs
-        this.chefs = new ArrayList<>();
-        this.activeChefIndex = 0;
-
-        // Ambil spawn points dari map
-        List<Position> spawnPoints = gameMap.getSpawnPoints();
-
-        // Buat Chef 1
-        Position spawn1 = spawnPoints.size() > 0 ? spawnPoints.get(0) : new Position(1, 1);
-        Chef chef1 = new Chef("chef1", "Gordon", new Position(spawn1.getX(), spawn1.getY()));
-        chef1.setIsActive(true);
-        chefs.add(chef1);
-
-        // Buat Chef 2
-        Position spawn2 = spawnPoints.size() > 1 ? spawnPoints.get(1) : new Position(2, 1);
-        Chef chef2 = new Chef("chef2", "Jamie", new Position(spawn2.getX(), spawn2.getY()));
-        chef2.setIsActive(false);
-        chefs.add(chef2);
-
-        this.inputHandler = new InputHandler();
+        // Init controller
+        this.controller = new GameController();
+        GameMap gameMap = controller.getGameMap();
 
         // Setup panel
         int panelWidth = gameMap.getWidth() * TILE_SIZE;
@@ -68,7 +41,7 @@ public class GameWindow extends JPanel implements KeyListener {
         addKeyListener(this);
 
         // Setup frame
-        frame = new JFrame("Cooking Game - WASD: Move | TAB: Switch Chef | M: Menu");
+        frame = new JFrame("Cooking Game - WASD: Move | TAB: Switch Chef | M: Menu | SPACE: Dash");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(this);
         frame.pack();
@@ -78,22 +51,12 @@ public class GameWindow extends JPanel implements KeyListener {
 
         // Print map untuk debug
         gameMap.printMap();
-        System.out.println("Spawn points: " + spawnPoints);
 
         requestFocusInWindow();
-    }
 
-    // Dapatkan chef yang aktif
-    private Chef getActiveChef() {
-        return chefs.get(activeChefIndex);
-    }
-
-    // Switch ke chef berikutnya
-    private void switchChef() {
-        chefs.get(activeChefIndex).setIsActive(false);
-        activeChefIndex = (activeChefIndex + 1) % chefs.size();
-        chefs.get(activeChefIndex).setIsActive(true);
-        System.out.println("Switched to: " + getActiveChef().getName());
+        // Timer untuk refresh layar (60 FPS) agar animasi cooldown berjalan mulus
+        Timer refreshTimer = new Timer(16, e -> repaint());
+        refreshTimer.start();
     }
 
     @Override
@@ -103,6 +66,9 @@ public class GameWindow extends JPanel implements KeyListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         drawMap(g2d);
+
+        List<Chef> chefs = controller.getChefs();
+        int activeChefIndex = controller.getActiveChefIndex();
 
         // Gambar semua chef
         for (int i = 0; i < chefs.size(); i++) {
@@ -114,6 +80,7 @@ public class GameWindow extends JPanel implements KeyListener {
 
     // Gambar map
     private void drawMap(Graphics2D g) {
+        GameMap gameMap = controller.getGameMap();
         for (int x = 0; x < gameMap.getWidth(); x++) {
             for (int y = 0; y < gameMap.getHeight(); y++) {
                 Tile tile = gameMap.getTile(x, y);
@@ -231,6 +198,8 @@ public class GameWindow extends JPanel implements KeyListener {
                 g.setColor(new Color(50, 150, 50));
                 g.drawString("SPAWN", centerX - 20, screenY + TILE_SIZE / 2 + 5);
                 break;
+            case FLOOR:
+                break;
         }
     }
 
@@ -287,6 +256,27 @@ public class GameWindow extends JPanel implements KeyListener {
         g.setColor(isActive ? Color.YELLOW : Color.GRAY);
         g.drawString(chef.getName().substring(0, Math.min(5, chef.getName().length())),
                 screenX + 8, screenY + TILE_SIZE + 10);
+
+        // Cooldown Bar (Dash)
+        if (isActive && !chef.canDash()) {
+            long remaining = chef.getDashCooldownRemaining();
+            long total = chef.getTotalDashCooldown();
+            float pct = 1.0f - ((float) remaining / total);
+
+            int barWidth = TILE_SIZE - 10;
+            int barHeight = 4;
+            int barX = screenX + 5;
+            int barY = screenY - 8;
+
+            g.setColor(Color.RED);
+            g.fillRect(barX, barY, barWidth, barHeight);
+
+            g.setColor(Color.GREEN);
+            g.fillRect(barX, barY, (int) (barWidth * pct), barHeight);
+
+            g.setColor(Color.WHITE);
+            g.drawRect(barX, barY, barWidth, barHeight);
+        }
     }
 
     // Gambar panah arah
@@ -316,8 +306,9 @@ public class GameWindow extends JPanel implements KeyListener {
 
     // Gambar info bar
     private void drawInfo(Graphics2D g) {
+        GameMap gameMap = controller.getGameMap();
         int infoY = gameMap.getHeight() * TILE_SIZE;
-        Chef activeChef = getActiveChef();
+        Chef activeChef = controller.getActiveChef();
 
         // Background
         g.setColor(new Color(30, 30, 30));
@@ -326,12 +317,20 @@ public class GameWindow extends JPanel implements KeyListener {
         // Info chef
         g.setColor(Color.YELLOW);
         g.setFont(new Font("Consolas", Font.BOLD, 14));
-        g.drawString("Chef: " + activeChef.getName() + " (" + (activeChefIndex + 1) + "/" + chefs.size() + ")", 10,
+        g.drawString(
+                "Chef: " + activeChef.getName() + " (" + (controller.getActiveChefIndex() + 1) + "/"
+                        + controller.getChefs().size() + ")",
+                10,
                 infoY + 18);
 
         // Posisi
         g.setColor(Color.WHITE);
-        g.drawString("Position: " + activeChef.getPosition() + " | Facing: " + activeChef.getDirection(), 10,
+        String dashStatus = activeChef.canDash() ? "READY"
+                : String.format("%.1fs", activeChef.getDashCooldownRemaining() / 1000.0);
+        g.drawString(
+                "Position: " + activeChef.getPosition() + " | Facing: " + activeChef.getDirection() + " | Dash: "
+                        + dashStatus,
+                10,
                 infoY + 38);
 
         // Tile saat ini
@@ -344,7 +343,9 @@ public class GameWindow extends JPanel implements KeyListener {
         // Kontrol
         g.setColor(new Color(120, 120, 120));
         g.setFont(new Font("Consolas", Font.PLAIN, 10));
-        g.drawString("WASD=Move | Q=Pickup | F=Drop | C=Cut | X=Wash | R=Cook | E=Interact | TAB=Switch | M=Menu", 10,
+        g.drawString(
+                "WASD=Move | Q=Pickup | F=Drop | C=Cut | X=Wash | R=Cook | E=Interact | TAB=Switch | SPACE=Dash | M=Menu",
+                10,
                 infoY + 75);
     }
 
@@ -377,19 +378,11 @@ public class GameWindow extends JPanel implements KeyListener {
                 return Key.P;
             case KeyEvent.VK_TAB:
                 return Key.TAB;
+            case KeyEvent.VK_SPACE:
+                return Key.SPACE;
             default:
                 return null;
         }
-    }
-
-    // Cek apakah posisi ditempati chef lain
-    private boolean isOccupied(int x, int y) {
-        for (int i = 0; i < chefs.size(); i++) {
-            if (i != activeChefIndex && chefs.get(i).getX() == x && chefs.get(i).getY() == y) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -401,112 +394,15 @@ public class GameWindow extends JPanel implements KeyListener {
         }
 
         Key key = convertKey(e);
-        if (key == null)
-            return;
-
-        Command command = inputHandler.handleInput(key);
-        Chef activeChef = getActiveChef();
-
-        if (command == Command.SWITCH_CHEF) {
-            switchChef();
-        } else if (command == Command.INTERACT) {
-            // Interaksi dengan station di depan chef
-            handleInteract(activeChef);
-        } else if (command == Command.PICKUP) {
-            handlePickup(activeChef);
-        } else if (command == Command.DROP) {
-            handleDrop(activeChef);
-        } else if (command == Command.PICKUP_DROP) {
-            // Legacy handling
-            if (activeChef.isHoldingItem())
-                handleDrop(activeChef);
-            else
-                handlePickup(activeChef);
-        } else if (command == Command.CUT || command == Command.WASH || command == Command.COOK) {
-            // Action specific stations
-            handleStationAction(activeChef, command);
-        } else if (inputHandler.isMovementCommand(command)) {
-            Direction dir = inputHandler.getDirectionFromCommand(command);
-            int newX = activeChef.getX() + dir.getDx();
-            int newY = activeChef.getY() + dir.getDy();
-
-            // Cek arah dulu
-            if (!activeChef.getDirection().equals(dir)) {
-                activeChef.setDirection(dir);
-            } else if (gameMap.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
-                activeChef.move(dir);
-            }
-        }
-
-        repaint();
-    }
-
-    // Handle interaksi dengan station
-    private void handleInteract(Chef chef) {
-        Position frontPos = chef.getFrontPosition();
-        Station station = gameMap.getStation(frontPos);
-
-        if (station != null) {
-            System.out.println(chef.getName() + " berinteraksi dengan " + station.getName());
-            station.interact(chef);
-        } else {
-            Tile frontTile = gameMap.getTile(frontPos);
-            if (frontTile != null) {
-                System.out.println("Tidak ada station di depan. Tile: " + frontTile.getType().getDisplayName());
-            }
-        }
-    }
-
-    // Handle pickup item
-    private void handlePickup(Chef chef) {
-        Position frontPos = chef.getFrontPosition();
-        Station station = gameMap.getStation(frontPos);
-
-        if (!chef.isHoldingItem()) {
-            if (station != null && !station.isEmpty()) {
-                chef.pickUpItem(station.takeItem());
-                System.out.println(chef.getName() + " mengambil item dari " + station.getName());
-            } else {
-                System.out.println("Tidak ada item untuk diambil!");
-            }
-        } else {
-            System.out.println("Tangan penuh!");
-        }
-    }
-
-    // Handle drop item
-    private void handleDrop(Chef chef) {
-        Position frontPos = chef.getFrontPosition();
-        Station station = gameMap.getStation(frontPos);
-
-        if (chef.isHoldingItem()) {
-            if (station != null && station.isEmpty()) {
-                station.addItem(chef.dropItem());
-                System.out.println(chef.getName() + " menaruh item di " + station.getName());
-            } else {
-                System.out.println("Tidak bisa menaruh item di sini!");
-            }
-        } else {
-            System.out.println("Tangan kosong!");
-        }
-    }
-
-    // Handle station specific actions
-    private void handleStationAction(Chef chef, Command command) {
-        Position frontPos = chef.getFrontPosition();
-        Station station = gameMap.getStation(frontPos);
-
-        if (station != null) {
-            // Validasi command dengan tipe station di sini nanti
-            // Untuk sekarang kita treat sebagai interaksi biasa tapi dengan intent spesifik
-            System.out.println("Melakukan aksi " + command + " pada " + station.getName());
-            station.interact(chef);
+        if (key != null) {
+            controller.processInput(key);
+            repaint();
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        getActiveChef().setIdle();
+        controller.releaseKey();
         repaint();
     }
 

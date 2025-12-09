@@ -31,6 +31,7 @@ public class KeybindConfig {
      * 
      * Control Scheme:
      * - Movement: W A S D
+     * - Dash: SPACE
      * - Pickup Item: Q
      * - Drop Item: F
      * - Cut (Cutting Station): C
@@ -47,6 +48,7 @@ public class KeybindConfig {
         keyBindings.put(Key.S, Command.MOVE_DOWN);
         keyBindings.put(Key.A, Command.MOVE_LEFT);
         keyBindings.put(Key.D, Command.MOVE_RIGHT);
+        keyBindings.put(Key.SPACE, Command.DASH);
 
         // Item Handling
         keyBindings.put(Key.Q, Command.PICKUP);

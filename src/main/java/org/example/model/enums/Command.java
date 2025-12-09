@@ -10,6 +10,7 @@ public enum Command {
     MOVE_DOWN,
     MOVE_LEFT,
     MOVE_RIGHT,
+    DASH, // Dash movement
 
     // Item handling
     PICKUP, // Ambil item dari station (Q)

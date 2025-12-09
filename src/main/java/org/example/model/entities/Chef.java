@@ -4,6 +4,7 @@ import org.example.model.enums.ChefState;
 import org.example.model.items.Item;
 import org.example.model.map.Direction;
 import org.example.model.map.Position;
+import org.example.util.GameTimer;
 
 /**
  * Kelas Chef yang merepresentasikan karakter pemain
@@ -118,6 +119,25 @@ public class Chef extends GameObject {
     // Cek apakah sedang memegang item
     public boolean isHoldingItem() {
         return this.inventory != null;
+    }
+
+    // Dash Logic
+    private GameTimer dashTimer = new GameTimer(5000); // 5 seconds cooldown
+
+    public boolean canDash() {
+        return dashTimer.isReady();
+    }
+
+    public void startDash() {
+        dashTimer.start();
+    }
+
+    public long getDashCooldownRemaining() {
+        return dashTimer.getRemaining();
+    }
+
+    public long getTotalDashCooldown() {
+        return dashTimer.getDuration();
     }
 
     // Getter dan Setter
