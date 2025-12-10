@@ -36,6 +36,7 @@ public abstract class KitchenUtensils extends Item {
     }
     public void addIngredient(Preparable ingredient){
         //masukkan bahan ke alat ini
+        
     }
     public void startCooking(){
         //ubah status bahan di dalamnya dari COOKING menjadi COOKED
