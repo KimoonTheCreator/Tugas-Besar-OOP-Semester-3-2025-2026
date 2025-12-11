@@ -27,4 +27,19 @@ public abstract class KitchenUtensils extends Item {
     public void emptyContents() {
         this.contents.clear();
     }
+    public int capacity(){
+        //return kapasitas maksimal suatu bahan
+        return 0;
+    }
+    public boolean canAccept(Preparable ingredient){
+        //cek apakah bahan cocok dengan alat ini?
+        return false;
+    }
+    public void addIngredient(Preparable ingredient){
+        //masukkan bahan ke alat ini
+        
+    }
+    public void startCooking(){
+        //ubah status bahan di dalamnya dari COOKING menjadi COOKED
+    }
 }

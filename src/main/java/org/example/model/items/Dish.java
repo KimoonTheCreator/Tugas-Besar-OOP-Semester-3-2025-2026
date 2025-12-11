@@ -11,9 +11,14 @@ public class Dish extends Item {
         this.components = new ArrayList<>();
     }
     public void addComponent (Ingredient ingredient){
-        //Tambahkan bahan ke dalam list
+        components.add(ingredient);
     }
+    
     public List<Ingredient> getComponents(){
         return this.components;
+    }
+
+    public void setComponents(List<Ingredient> components){
+        this.components = components;
     }
 }
