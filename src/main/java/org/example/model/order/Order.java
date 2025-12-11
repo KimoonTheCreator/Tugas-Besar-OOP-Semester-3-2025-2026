@@ -1,19 +1,20 @@
 package org.example.model.order;
+import org.example.model.items.Dish;
 
 public class Order {
-    private String name;
+    private Dish dish;
     private int reward = 120;
     private int penalty = -50;
     private int time;
     // private int id;
 
-    Order(String name, int time){
-        this.name = name;
+    public Order(Dish dish, int time){
+        this.dish = dish;
         this.time = time;
     }
 
     public String getName() {
-        return name;
+        return dish.getName();
     }
 
     public int getPenalty() {

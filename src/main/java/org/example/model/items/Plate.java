@@ -1,46 +1,70 @@
 package org.example.model.items;
 
 import org.example.model.interfaces.Preparable;
+import java.util.ArrayList; // Support List punya teman
+import java.util.List;
 
-// Pastikan nama class parent sesuai dengan file Anda (KitchenUtensil vs KitchenUtensils)
+// 1. Tetap extends KitchenUtensil (Supaya aman di TrashStation)
 public class Plate extends KitchenUtensils {
+
     private boolean isClean;
 
     public Plate() {
         super("Plate");
-        this.isClean = true; // Default bersih
+        this.isClean = true;
+    }
+
+    // 2. VALIDASI KEBERSIHAN (Penting!)
+    @Override
+    public void addItem(Preparable item) {
+        if (this.isClean) {
+            super.addItem(item); // Simpan ke Set (Parent)
+        } else {
+            System.out.println("Gagal! Piring kotor.");
+        }
+    }
+
+    // 3. Support Method Teman (Jembatan/Adapter)
+    // Jika kode teman lain memanggil addIngredients, kita alihkan ke addItem
+    public void addIngredients(Ingredient ingredient) {
+        this.addItem(ingredient);
+    }
+
+    // 4. Method Cuci (Support kedua nama biar kompatibel)
+    public void wash() {
+        this.cleanPlate();
+    }
+
+    public void cleanPlate() {
+        this.isClean = true;
+        this.emptyContents();
+    }
+
+    // 5. Konversi ke Dish (Fitur Teman, tapi diperbaiki)
+    // Ini opsional, bisa dipakai jika OrderManager butuh objek Dish
+    public Dish createDish(String name) {
+        Dish d = new Dish(name);
+        // Konversi Set ke List agar sesuai kemauan teman
+        List<Ingredient> ingredients = new ArrayList<>();
+        for (Preparable p : this.getContents()) {
+            if (p instanceof Ingredient) {
+                ingredients.add((Ingredient) p);
+            }
+        }
+        d.setComponents(ingredients);
+
+        // Jangan dikotorin dulu disini, biarkan ServingCounter yang mengotorinya
+        // this.isClean = false;
+
+        return d;
+    }
+
+    public void markAsDirty() {
+        this.isClean = false;
+        this.emptyContents();
     }
 
     public boolean isClean() {
         return isClean;
-    }
-
-    public void setClean(boolean clean) {
-        this.isClean = clean;
-    }
-
-    // --- TAMBAHAN PENTING SESUAI SPEK ---
-
-    // Menimpa method addItem milik Parent
-    // Tujuannya: Mencegah pemain menaruh makanan di piring kotor
-    @Override
-    public void addItem(Preparable item) {
-        if (this.isClean) {
-            super.addItem(item); // Jika bersih, boleh isi (panggil logic Parent)
-        } else {
-            System.out.println("Gagal! Piring ini kotor.");
-        }
-    }
-
-    // Helper untuk WashingStation nanti
-    public void cleanPlate() {
-        this.isClean = true;
-        this.emptyContents(); // Kosongkan sisa kotoran (jika ada)
-    }
-
-    // Helper untuk ServingStation/Customer nanti
-    public void markAsDirty() {
-        this.isClean = false;
-        this.emptyContents(); // Makanan habis, piring jadi kotor
     }
 }
