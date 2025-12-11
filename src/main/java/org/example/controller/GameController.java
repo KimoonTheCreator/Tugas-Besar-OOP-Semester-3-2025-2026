@@ -198,4 +198,12 @@ public class GameController {
         System.out.println(getActiveChef().getName() + " attempted to pickup item.");
         // Tambahkan logika pickup di sini
     }
+
+    public void handlePauseCommand() {
+        System.out.println("Pause command received. Implementasi pop-up pause akan diletakkan di sini.");
+        // Logika Pop-up Pause dan menghentikan game loop akan menyusul di sini
+
+        // Nanti, Anda akan memanggil metode untuk menampilkan Pop-up Pause di sini.
+        // Contoh: showPausePopUp();
+    }
 }
