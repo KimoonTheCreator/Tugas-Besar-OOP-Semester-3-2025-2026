@@ -2,14 +2,12 @@ package org.example.controller;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class MainMenuController {
 
@@ -25,48 +23,33 @@ public class MainMenuController {
             // --- 1. MEMUAT ASSET BACKGROUND DAN TITLE ---
             
             // Background
-            try {
-                backgroundView.setImage(new Image(getClass().getResource("/res/ui/mainmenu.png").toExternalForm()));
-            } catch (NullPointerException e) {
-                System.err.println("ERROR: Background (mainmenu.png) tidak ditemukan.");
-                e.printStackTrace();
-            }
-
+            backgroundView.setImage(new Image(getClass().getResource("/res/ui/mainmenu.png").toExternalForm()));
             // Title
-            try {
-                titleView.setImage(new Image(getClass().getResource("/res/ui/title.png").toExternalForm()));
-            } catch (NullPointerException e) {
-                System.err.println("ERROR: Title (title.png) tidak ditemukan.");
-                e.printStackTrace();
-            }
+            titleView.setImage(new Image(getClass().getResource("/res/ui/title.png").toExternalForm()));
 
 
             // --- 2. MEMUAT ASSET TOMBOL NORMAL ---
             
-            Image playNormal = loadButtonImage(playButtonView, "playmainmenu");
-            Image tutorialNormal = loadButtonImage(tutorialButtonView, "tutorialmainmenu");
-            Image quitNormal = loadButtonImage(quitButtonView, "quitmainmenu");
+            Image playNormal = loadButtonImage(playButtonView, "play");
+            Image tutorialNormal = loadButtonImage(tutorialButtonView, "tutorial");
+            Image quitNormal = loadButtonImage(quitButtonView, "quit");
 
-            // Memasang gambar normal (Hanya jika berhasil dimuat)
             if (playNormal != null) playButtonView.setImage(playNormal);
             if (tutorialNormal != null) tutorialButtonView.setImage(tutorialNormal);
             if (quitNormal != null) quitButtonView.setImage(quitNormal);
 
             // --- 3. MEMASANG EFEK TOMBOL ---
-            // Efek tombol akan menggunakan gambar normal sebagai fallback jika _pressed tidak ada
-            if (playNormal != null) setupButtonEffects(playButtonView, "playmainmenu", playNormal);
-            if (tutorialNormal != null) setupButtonEffects(tutorialButtonView, "tutorialmainmenu", tutorialNormal);
-            if (quitNormal != null) setupButtonEffects(quitButtonView, "quitmainmenu", quitNormal);
+            if (playNormal != null) setupButtonEffects(playButtonView, "play", playNormal);
+            if (tutorialNormal != null) setupButtonEffects(tutorialButtonView, "tutorial", tutorialNormal);
+            if (quitNormal != null) setupButtonEffects(quitButtonView, "quit", quitNormal);
 
 
         } catch (Exception e) {
-            // Blok catch umum ini sekarang hanya menangkap error lain yang tidak terkait loading image
             System.err.println("Terjadi kesalahan tak terduga saat inisialisasi Main Menu.");
             e.printStackTrace();
         }
     }
 
-    // Metode baru untuk memuat gambar tombol dan memberikan feedback
     private Image loadButtonImage(ImageView view, String id) {
         try {
             String path = "/res/ui/" + id + ".png";
@@ -74,148 +57,91 @@ public class MainMenuController {
             
             if (url == null) {
                 System.err.println("FATAL ERROR: File tombol '" + id + ".png' tidak ditemukan di path: " + path);
-                return null; // Gagal
+                return null;
             }
             
-            System.out.println("DEBUG: Memuat " + path);
             return new Image(url.toExternalForm());
             
         } catch (Exception e) {
             System.err.println("Gagal memuat asset '" + id + ".png'.");
-            e.printStackTrace();
             return null;
         }
     }
-    // @FXML
-    // public void initialize() {
-    //     try {
-    //         // Memuat Gambar Normal
-    //         backgroundView.setImage(new Image(getClass().getResource("/res/ui/mainmenu.png").toExternalForm()));
-    //         titleView.setImage(new Image(getClass().getResource("/res/ui/title.png").toExternalForm()));
 
-    //         Image playNormal = new Image(getClass().getResource("/res/ui/playmainmenu.png").toExternalForm());
-    //         Image tutorialNormal = new Image(getClass().getResource("/res/ui/tutorialmainmenu.png").toExternalForm());
-    //         Image quitNormal = new Image(getClass().getResource("/res/ui/quitmainmenu.png").toExternalForm());
-
-    //         playButtonView.setImage(playNormal);
-    //         tutorialButtonView.setImage(tutorialNormal);
-    //         quitButtonView.setImage(quitNormal);
-
-    //         // 2. Memasang Efek Tombol (Panggil metode helper yang baru)
-    //         setupButtonEffects(playButtonView, "playmainmenu", playNormal);
-    //         setupButtonEffects(tutorialButtonView, "tutorialmainmenu", tutorialNormal);
-    //         setupButtonEffects(quitButtonView, "quitmainmenu", quitNormal);
-
-
-    //     } catch (Exception e) {
-    //         System.err.println("Gagal memuat satu atau lebih aset PNG Main Menu. Pastikan path /res/ui/ sudah benar.");
-    //         e.printStackTrace();
-    //     }
-    // }
-
-    /**
-     * Metode Helper untuk menangani efek visual tombol (Pressed State)
-     * @param buttonView ImageView yang akan diberi efek
-     * @param id ID tombol (misalnya "playmainmenu") untuk mencari file _pressed.png
-     * @param normalImage Gambar tombol saat keadaan normal
-     */
     private void setupButtonEffects(ImageView buttonView, String id, Image normalImage) {
 
         Image pressedImage;
         try {
-            // Coba muat gambar versi _pressed.png
             pressedImage = new Image(getClass().getResource("/res/ui/" + id + "_pressed.png").toExternalForm());
         } catch (Exception e) {
-            System.err.println("Warning: Pressed image not found for " + id + ". Using default image as fallback.");
-            pressedImage = normalImage; // Fallback jika _pressed.png tidak ditemukan
+            pressedImage = normalImage; // Fallback
         }
 
         final Image finalPressedImage = pressedImage;
 
-        // 1. Mouse Pressed: Ganti ke gambar gelap/pressed
-        buttonView.setOnMousePressed(event -> {
-            buttonView.setImage(finalPressedImage);
-        });
-
-        // 2. Mouse Released: Kembali ke gambar normal
-        // Ini akan dipicu sebelum onMouseClicked.
-        buttonView.setOnMouseReleased(event -> {
-            buttonView.setImage(normalImage);
-        });
-
-        // Opsional: Efek Hover (membuat kursor menjadi tangan)
-        buttonView.setOnMouseEntered(event -> {
-            buttonView.getScene().setCursor(javafx.scene.Cursor.HAND);
-        });
-
-        buttonView.setOnMouseExited(event -> {
-            buttonView.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
-        });
+        buttonView.setOnMousePressed(event -> buttonView.setImage(finalPressedImage));
+        buttonView.setOnMouseReleased(event -> buttonView.setImage(normalImage));
+        buttonView.setOnMouseEntered(event -> buttonView.getScene().setCursor(javafx.scene.Cursor.HAND));
+        buttonView.setOnMouseExited(event -> buttonView.getScene().setCursor(javafx.scene.Cursor.DEFAULT));
     }
 
-    // 3. Logic handler (Pastikan menggunakan referensi ImageView untuk mendapatkan Stage)
-
     @FXML
-    private void handlePlayButton(MouseEvent event) throws IOException {
-        // Dapatkan Stage dari Scene yang dimiliki oleh ImageView
-        Stage stage = (Stage) playButtonView.getScene().getWindow();
+    private void handlePlayButton(MouseEvent event) { 
+        System.out.println("DEBUG: Tombol PLAY ditekan. Mencoba memuat Game Scene...");
 
-        // 1. Muat GameView.fxml
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/GameView.fxml"));
-        Scene gameScene = new Scene(fxmlLoader.load(), 700, 600);
+        try {
+            Stage stage = (Stage) playButtonView.getScene().getWindow();
 
-        // Dapatkan GameController
-        GameController gameController = fxmlLoader.getController(); // <-- PENTING: Ambil Controller Game!
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/GameView.fxml"));
+            Parent gameRootNode = fxmlLoader.load(); 
+            Scene gameScene = new Scene(gameRootNode, 700, 600);
 
-        // 2. PASANG INPUT KEYBOARD PADA GAME SCENE
-        gameScene.setOnKeyPressed(e -> {
-            javafx.scene.input.KeyCode code = e.getCode();
-
-            // Panggil command handling di GameController
-            switch (code) {
-                case W:
-                    gameController.handleMoveCommand(org.example.model.map.Direction.UP);
-                    break;
-                case A:
-                    gameController.handleMoveCommand(org.example.model.map.Direction.LEFT);
-                    break;
-                case S:
-                    gameController.handleMoveCommand(org.example.model.map.Direction.DOWN);
-                    break;
-                case D:
-                    gameController.handleMoveCommand(org.example.model.map.Direction.RIGHT);
-                    break;
-                case TAB:
-                    gameController.switchChef();
-                    break;
-                case E:
-                    gameController.handleInteractCommand();
-                    break;
-                case V:
-                    gameController.handlePickupCommand();
-                    break;
-                case ESCAPE: // Tambahkan trigger pause di sini
-                    gameController.handlePauseCommand();
-                    break;
-                default:
-                    // Abaikan tombol lain
+            GameController gameController = fxmlLoader.getController(); 
+            
+            if (gameController == null) {
+                throw new IllegalStateException("GameController tidak ditemukan setelah memuat GameView.fxml.");
             }
-        });
+            System.out.println("DEBUG: GameController berhasil didapatkan.");
 
-        // 3. Ganti Scene
-        stage.setScene(gameScene);
-        stage.show();
+            // 2. PASANG INPUT KEYBOARD PADA GAME SCENE
+            gameScene.setOnKeyPressed(e -> {
+                javafx.scene.input.KeyCode code = e.getCode();
+                switch (code) {
+                    case W: gameController.handleMoveCommand(org.example.model.map.Direction.UP); break;
+                    case A: gameController.handleMoveCommand(org.example.model.map.Direction.LEFT); break;
+                    case S: gameController.handleMoveCommand(org.example.model.map.Direction.DOWN); break;
+                    case D: gameController.handleMoveCommand(org.example.model.map.Direction.RIGHT); break;
+                    case TAB: gameController.switchChef(); break;
+                    case E: gameController.handleInteractCommand(); break;
+                    case V: gameController.handlePickupCommand(); break;
+                    case ESCAPE: gameController.handlePauseCommand(); break; // Handler Pause Menu
+                    default: 
+                }
+            });
+
+            // 3. Ganti Scene
+            stage.setScene(gameScene);
+            stage.show();
+            System.out.println("DEBUG: Scene telah beralih ke Game View.");
+
+        } catch (java.io.IOException e) {
+            System.err.println("FATAL ERROR: Gagal memuat GameView.fxml. Cek path '/org/example/view/GameView.fxml' atau sintaks FXML.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("FATAL ERROR: Terjadi error saat menginisialisasi GameController atau menyiapkan scene.");
+            System.err.println("Penyebab utama: Cek @FXML fields, Asset Manager, atau 'initialize()' di GameController.");
+            e.printStackTrace();
+        }
     }
 
     @FXML
-    private void handleTutorialButton(MouseEvent event) { // <-- Perlu parameter MouseEvent
-        Stage stage = (Stage) tutorialButtonView.getScene().getWindow();
-        // TODO: Implementasi logika untuk berpindah ke TutorialView.fxml
+    private void handleTutorialButton(MouseEvent event) { 
+        // Logika Tutorial
         System.out.println("Tutorial page will be loaded.");
     }
 
     @FXML
-    private void handleQuitButton(MouseEvent event) { // <-- Perlu parameter MouseEvent
+    private void handleQuitButton(MouseEvent event) { 
         Stage stage = (Stage) quitButtonView.getScene().getWindow();
         stage.close();
         System.out.println("Application closed from Main Menu.");

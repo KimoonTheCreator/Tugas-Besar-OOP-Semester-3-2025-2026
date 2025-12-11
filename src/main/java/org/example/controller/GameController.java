@@ -5,6 +5,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
+
 import org.example.model.entities.Chef; 
 import org.example.model.map.Direction;
 import org.example.model.map.Map;
@@ -12,11 +14,14 @@ import org.example.model.map.Position;
 import org.example.model.map.Tile;
 import org.example.model.enums.TileType; 
 import org.example.view.AssetManager;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.layout.AnchorPane;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-// JANGAN import java.util.Map, gunakan nama lengkapnya di bawah
 
 /**
  * Controller utama untuk GameView.fxml.
@@ -34,7 +39,14 @@ public class GameController {
     
     @FXML 
     private Label scoreLabel;
+
+    @FXML
+    private AnchorPane gameRoot;
     
+    private boolean isPaused = false;
+    private Parent pauseMenu;
+    private PauseMenuController pauseMenuController;
+
     private final Map gameMap;
     private final List<Chef> chefs;
     private int activeChefIndex = 0;
@@ -167,6 +179,75 @@ public class GameController {
         updateInfoBar();
     }
     
+    public void handlePauseCommand() {
+        if (isPaused) {
+            resumeGame();
+        } else {
+            pauseGame();
+        }
+    }
+    
+    public void pauseGame() {
+        if (isPaused) return; // Sudah pause
+
+        isPaused = true;
+        // Hentikan game loop (contoh: animator.stop())
+        System.out.println("Game Paused.");
+        
+        // Muat dan Tampilkan Menu Pause
+        if (pauseMenu == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/view/PauseMenuView.fxml"));
+                pauseMenu = loader.load();
+                pauseMenuController = loader.getController();
+                pauseMenuController.setGameController(this); // Beri referensi balik
+            } catch (IOException e) {
+                System.err.println("Gagal memuat PauseMenuView.fxml");
+                e.printStackTrace();
+                return;
+            }
+        }
+        
+        // Tambahkan Menu Pause ke root Game Scene
+        gameRoot.getChildren().add(pauseMenu);
+        
+        // Pastikan menu pause memenuhi seluruh layar
+        AnchorPane.setTopAnchor(pauseMenu, 0.0);
+        AnchorPane.setBottomAnchor(pauseMenu, 0.0);
+        AnchorPane.setLeftAnchor(pauseMenu, 0.0);
+        AnchorPane.setRightAnchor(pauseMenu, 0.0);
+    }
+    
+    public void resumeGame() {
+        if (!isPaused) return; // Sudah berjalan
+
+        // Hapus Menu Pause
+        gameRoot.getChildren().remove(pauseMenu);
+        
+        isPaused = false;
+        // Lanjutkan game loop (contoh: animator.start())
+        System.out.println("Game Resumed.");
+    }
+    
+    public void quitToMainMenu() {
+        // Logika untuk kembali ke Main Menu
+        Stage stage = (Stage) gameRoot.getScene().getWindow();
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/MainMenuView.fxml"));
+            stage.getScene().setRoot(fxmlLoader.load());
+            // stage.getScene().setRoot(fxmlLoader.load()); adalah cara cepat mengganti root scene
+            // stage.setScene(new Scene(fxmlLoader.load())); adalah cara lama
+            
+            // Hentikan game loop sepenuhnya sebelum keluar (PENTING)
+            // animator.stop(); 
+            
+            isPaused = false;
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void handleMoveCommand(Direction dir) {
         Chef activeChef = getActiveChef();
         int newX = activeChef.getX() + dir.getDx();
@@ -197,13 +278,5 @@ public class GameController {
     public void handlePickupCommand() {
         System.out.println(getActiveChef().getName() + " attempted to pickup item.");
         // Tambahkan logika pickup di sini
-    }
-
-    public void handlePauseCommand() {
-        System.out.println("Pause command received. Implementasi pop-up pause akan diletakkan di sini.");
-        // Logika Pop-up Pause dan menghentikan game loop akan menyusul di sini
-
-        // Nanti, Anda akan memanggil metode untuk menampilkan Pop-up Pause di sini.
-        // Contoh: showPausePopUp();
     }
 }
