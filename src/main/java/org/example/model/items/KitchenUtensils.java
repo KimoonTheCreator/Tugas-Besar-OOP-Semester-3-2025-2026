@@ -4,26 +4,27 @@ import org.example.model.interfaces.Preparable;
 import java.util.HashSet;
 import java.util.Set;
 
-
 public abstract class KitchenUtensils extends Item {
+
 
     protected Set<Preparable> contents;
 
-    public KitchenUtensils(String name){
+    public KitchenUtensils(String name) {
         super(name);
         this.contents = new HashSet<>();
-    }
-    public boolean isPortable(){
-        return true;
     }
 
     public Set<Preparable> getContents() {
         return contents;
     }
-    public void addItem(Preparable item){
+
+
+    public void addItem(Preparable item) {
         this.contents.add(item);
     }
-    public void  removeItem(){
+
+
+    public void emptyContents() {
         this.contents.clear();
     }
     public int capacity(){

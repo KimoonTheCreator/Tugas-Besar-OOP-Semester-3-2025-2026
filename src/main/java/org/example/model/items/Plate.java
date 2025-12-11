@@ -1,35 +1,46 @@
 package org.example.model.items;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.example.model.interfaces.Preparable;
 
-public class Plate extends Item {
-    boolean clean;
-    List<Ingredient> cookedIngredients;
+// Pastikan nama class parent sesuai dengan file Anda (KitchenUtensil vs KitchenUtensils)
+public class Plate extends KitchenUtensils {
+    private boolean isClean;
 
-    public Plate(String name){
-        super(name);
-        this.clean = true;
-        cookedIngredients = new ArrayList<>();
-    }
-
-    public void addIngredients(Ingredient ingredient){
-        cookedIngredients.add(ingredient);
-    }
-
-    public Dish createDish(String name){
-        Dish d = new Dish(name);
-        d.setComponents(cookedIngredients);
-        this.clean = false;
-        cookedIngredients = new ArrayList<>();
-        return d;        
-    }
-
-    public void wash(){
-        clean = true;
+    public Plate() {
+        super("Plate");
+        this.isClean = true; // Default bersih
     }
 
     public boolean isClean() {
-        return clean;
-    }  
+        return isClean;
+    }
+
+    public void setClean(boolean clean) {
+        this.isClean = clean;
+    }
+
+    // --- TAMBAHAN PENTING SESUAI SPEK ---
+
+    // Menimpa method addItem milik Parent
+    // Tujuannya: Mencegah pemain menaruh makanan di piring kotor
+    @Override
+    public void addItem(Preparable item) {
+        if (this.isClean) {
+            super.addItem(item); // Jika bersih, boleh isi (panggil logic Parent)
+        } else {
+            System.out.println("Gagal! Piring ini kotor.");
+        }
+    }
+
+    // Helper untuk WashingStation nanti
+    public void cleanPlate() {
+        this.isClean = true;
+        this.emptyContents(); // Kosongkan sisa kotoran (jika ada)
+    }
+
+    // Helper untuk ServingStation/Customer nanti
+    public void markAsDirty() {
+        this.isClean = false;
+        this.emptyContents(); // Makanan habis, piring jadi kotor
+    }
 }
