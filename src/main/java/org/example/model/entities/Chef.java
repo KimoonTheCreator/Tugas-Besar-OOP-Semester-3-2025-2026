@@ -4,6 +4,8 @@ import org.example.model.enums.PlayerState;
 import org.example.model.items.Item;
 import org.example.model.map.Direction;
 import org.example.model.map.Position;
+import org.example.model.map.Map;
+import org.example.model.stations.Station;
 
 /**
  * Kelas Chef yang merepresentasikan karakter pemain
