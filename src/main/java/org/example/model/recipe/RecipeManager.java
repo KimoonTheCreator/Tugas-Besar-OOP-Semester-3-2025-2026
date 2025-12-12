@@ -37,25 +37,26 @@ public class RecipeManager {
     }
 
     private void initializeRecipes() {
-        // 1. Pizza Margherita: Adonan (Chopped) + Tomat (Chopped) + Keju (Chopped)
-        Recipe margherita = new Recipe("Uncooked Pizza Margherita");
+        // Ganti nama resep jadi simpel: "Margherita", "Sausage", "Chicken"
+        // Agar nanti pas bikin Pizza jadi: new Pizza("Margherita") -> Name: "Pizza Margherita"
+
+        // 1. Margherita
+        Recipe margherita = new Recipe("Margherita");
         margherita.addComponent("Adonan", IngredientState.CHOPPED);
         margherita.addComponent("Tomat", IngredientState.CHOPPED);
         margherita.addComponent("Keju", IngredientState.CHOPPED);
         recipes.add(margherita);
 
-        // 2. Pizza Sosis: Adonan (Chopped) + Tomat (Chopped) + Keju (Chopped) + Sosis
-        // (Chopped)
-        Recipe sausage = new Recipe("Uncooked Pizza Sosis");
+        // 2. Sosis (Sausage)
+        Recipe sausage = new Recipe("Sausage");
         sausage.addComponent("Adonan", IngredientState.CHOPPED);
         sausage.addComponent("Tomat", IngredientState.CHOPPED);
         sausage.addComponent("Keju", IngredientState.CHOPPED);
         sausage.addComponent("Sosis", IngredientState.CHOPPED);
         recipes.add(sausage);
 
-        // 3. Pizza Ayam: Adonan (Chopped) + Tomat (Chopped) + Keju (Chopped) + Ayam
-        // (Chopped)
-        Recipe chicken = new Recipe("Uncooked Pizza Ayam");
+        // 3. Ayam (Chicken)
+        Recipe chicken = new Recipe("Chicken");
         chicken.addComponent("Adonan", IngredientState.CHOPPED);
         chicken.addComponent("Tomat", IngredientState.CHOPPED);
         chicken.addComponent("Keju", IngredientState.CHOPPED);
@@ -87,9 +88,7 @@ public class RecipeManager {
 
     public Recipe findMatchingRecipe(Dish dish) {
         for (Recipe r : recipes) {
-            // Recipe name typically "Uncooked [DishName]"
-            // Dish name is "[DishName]"
-            if (r.getName().contains(dish.getName()))
+            if (r.getName().matches(dish.getName()))
                 return r;
         }
         return null;

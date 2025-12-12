@@ -3,35 +3,30 @@ package org.example.model.stations;
 import org.example.model.entities.Chef;
 import org.example.model.items.Ingredient;
 import org.example.model.map.Position;
-import org.example.model.items.Plate;
 
 public class IngredientStorage extends Station {
+
     private String ingredientName;
 
-    public IngredientStorage(Position position, String ingredientName) {
-        super("Ingredient Storage", position);
+    public IngredientStorage(String name, Position position, String ingredientName) {
+        super(name, position);
         this.ingredientName = ingredientName;
     }
 
-    public String getIngredientName() {
-        return ingredientName;
+    public String getIngredientName() { return ingredientName; }
+
+    // GUNAKAN TOMBOL F (Pickup/Drop) UNTUK INI
+    @Override
+    public void interact(Chef chef) {
+        if (!chef.isHoldingItem()) {
+            chef.setInventory(new Ingredient(this.ingredientName));
+            System.out.println("Mengambil " + ingredientName + " (Tombol F)");
+        }
     }
 
-    public void interact(Chef chef) {
-        // Case 1: Empty Hand -> Take Ingredient
-        if (!chef.isHoldingItem()) {
-            Ingredient newIngredient = new Ingredient(ingredientName);
-            chef.setInventory(newIngredient);
-        }
-        // Case 2: Holding Plate -> Add Ingredient to Plate
-        else if (chef.getInventory() instanceof Plate) {
-            Plate plate = (Plate) chef.getInventory();
-            if (plate.isClean()) { // Validate if plate accepts ingredients?
-                Ingredient newIngredient = new Ingredient(ingredientName);
-                if (plate.canAccept(newIngredient)) {
-                    plate.addItem(newIngredient);
-                }
-            }
-        }
+    // GUNAKAN TOMBOL V (Action) UNTUK INI
+    public void action(Chef chef) {
+        // Peti bahan tidak bisa "dikerjai", jadi kosongkan saja
+        System.out.println("Tidak ada aksi yang bisa dilakukan di peti ini.");
     }
 }

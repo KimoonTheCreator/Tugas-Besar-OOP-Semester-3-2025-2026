@@ -1,43 +1,41 @@
 package org.example.model.stations;
 
 import org.example.model.entities.Chef;
-import org.example.model.interfaces.Preparable;
 import org.example.model.items.Plate;
 import org.example.model.map.Position;
-
-import java.util.Set;
+import org.example.model.order.OrderManager;
 
 public class ServingCounter extends Station {
+    private OrderManager orderManager;
 
-    private Plate servedPlate;
-
-    public ServingCounter(Position position) {
-        super("Serving Counter", position);
-        this.servedPlate = null;
+    public ServingCounter(String name, Position position, OrderManager orderManager) {
+        super(name, position);
+        this.orderManager = orderManager;
     }
 
     @Override
     public void interact(Chef chef) {
-        // Cek apakah Chef membawa item
-        if (chef.isHoldingItem()) {
-            if (chef.getInventory() instanceof Plate) {
-                Plate piring = (Plate) chef.getInventory();
+        // Trigger: Drop (Key V)
+        if (chef.isHoldingItem() && chef.getInventory() instanceof Plate) {
+            Plate plate = (Plate) chef.getInventory();
 
-                // Cek apakah piring berisi makanan
-                if (!piring.getContents().isEmpty()) {
-                    chef.dropItem(); // Chef drops it
-                    this.servedPlate = piring; // Store for validation
-                    // piring.markAsDirty(); // Controller will handle logic after validation
-                }
+            // Validasi Order
+            boolean isSuccess = orderManager.validateAndRemoveOrder(plate.getContents());
+
+            if (isSuccess) {
+                System.out.println("Order SUKSES! Skor bertambah.");
+            } else {
+                System.out.println("Order GAGAL! Penalti. Makanan dimakan Kak Jendra.");
             }
+
+            // OUTPUT: Plate hilang dari tangan Chef (dimakan/disajikan)
+            // Nanti Chef harus ambil piring baru di PlateStorage.
+            // (Simulasi "Kembali ke Plate Storage" = destroy object di sini)
+            chef.dropItem();
+
+            // Catatan: Untuk fitur "Kembali ke storage 10 detik kotor",
+            // itu butuh sistem Event Queue global yang rumit.
+            // Solusi simple: Piring hilang, PlateStorage selalu sedia piring baru.
         }
-    }
-
-    public Plate getServedPlate() {
-        return servedPlate;
-    }
-
-    public void clearServedPlate() {
-        this.servedPlate = null;
     }
 }

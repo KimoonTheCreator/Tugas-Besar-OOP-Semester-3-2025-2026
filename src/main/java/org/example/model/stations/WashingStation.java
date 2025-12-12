@@ -7,81 +7,75 @@ import org.example.model.map.Position;
 
 public class WashingStation extends Station {
 
-    private Chef currentChef;
-    private double progress;
-    private static final double WASHING_DURATION = 3.0; // Seconds
+    private Chef washerChef;
+    private double washTimer = 0;
+    private static final double REQUIRED_TIME = 3.0; // SPEK: 3 Detik
 
-    private boolean isProcessRunning;
-
-    public WashingStation(Position position) {
-        super("Washing Station", position);
-        this.isProcessRunning = false;
-        this.progress = 0;
+    public WashingStation(String name, Position position) {
+        super(name, position);
     }
 
-    @Override
-    public void action(Chef chef) {
-        if (!this.isEmpty() && this.getItem() instanceof Plate) {
-            Plate piringDiWastafel = (Plate) this.getItem();
-
-            if (!piringDiWastafel.isClean() && !isProcessRunning) {
-                startWashingProcess(chef);
-            }
-        }
-    }
-
+    // KEY V: TARUH / AMBIL
     @Override
     public void interact(Chef chef) {
-        // SKENARIO 1: MENARUH PIRING KOTOR
-        if (chef.isHoldingItem() && this.isEmpty()) {
-            if (chef.getInventory() instanceof Plate) {
-                // Allow placing any plate? User says "Input: (Beberapa) Plate kotor".
-                // But usually allows placing.
-                this.addItem(chef.dropItem());
+        if (washerChef != null) {
+            cancelWashing(); // Batal kalau diganggu
+            return;
+        }
+
+        // Cek Piring Kotor
+        if (isEmpty() && chef.isHoldingItem() && chef.getInventory() instanceof Plate) {
+            Plate p = (Plate) chef.getInventory();
+            if (!p.isClean()) {
+               if (this.isEmpty() && chef.isHoldingItem()) {
+                    this.addItem(chef.dropItem());
+               } else if (!this.isEmpty() && !chef.isHoldingItem()) {
+                    chef.setInventory(this.removeItem());
+               }
+            } else {
+                System.out.println("Piring sudah bersih!");
+            }
+        }else if (this.isEmpty() && chef.isHoldingItem()) {
+            this.addItem(chef.dropItem());
+        } else if (!this.isEmpty() && !chef.isHoldingItem()) {
+            chef.setInventory(this.removeItem());
+        }
+    }
+
+    // KEY C: MENCUCI (TRIGGER)
+    public void action(Chef chef) {
+        if (!isEmpty() && getItem() instanceof Plate) {
+            Plate p = (Plate) getItem();
+            if (!p.isClean()) {
+                if (washerChef == null) {
+                    this.washerChef = chef;
+                    chef.setState(ChefState.INTERACT); // Chef Busy
+                    System.out.println("Mulai mencuci (3 detik)...");
+                } else if (washerChef == chef) {
+                    cancelWashing();
+                }
             }
         }
-        // SKENARIO 2: MENGAMBIL PIRING (BERSIH)
-        else if (!chef.isHoldingItem() && !this.isEmpty()) {
-            // If currently washing, maybe stop?
-            if (isProcessRunning) {
-                stopWashing();
-            }
-            chef.pickUpItem(this.takeItem());
-        }
     }
 
-    private void startWashingProcess(Chef chef) {
-        isProcessRunning = true;
-        currentChef = chef;
-        progress = 0;
-        chef.setState(ChefState.INTERACT);
-    }
-
-    private void stopWashing() {
-        isProcessRunning = false;
-        if (currentChef != null) {
-            currentChef.setIdle();
-            currentChef = null;
-        }
-        progress = 0;
-    }
-
-    @Override
     public void update(double deltaTime) {
-        if (isProcessRunning && currentChef != null && this.getItem() instanceof Plate) {
-            Plate p = (Plate) this.getItem();
+        if (washerChef != null && !isEmpty()) {
+            washTimer += deltaTime;
 
-            if (currentChef.getState() != ChefState.INTERACT) {
-                stopWashing();
-                return;
+            if (washTimer >= REQUIRED_TIME) {
+                Plate p = (Plate) getItem();
+                p.wash(); // Jadi Bersih
+                System.out.println("Piring BERSIH!");
+                cancelWashing();
             }
+        }
+    }
 
-            // Progress Washing
-            progress += deltaTime;
-            if (progress >= WASHING_DURATION) {
-                p.cleanPlate();
-                stopWashing();
-            }
+    public void cancelWashing() {
+        if (washerChef != null) {
+            washerChef.setState(ChefState.IDLE);
+            washerChef = null;
+            washTimer = 0; // Reset timer cuci (biasanya cuci ulang dari awal)
         }
     }
 }

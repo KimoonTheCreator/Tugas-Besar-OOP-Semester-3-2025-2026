@@ -5,6 +5,14 @@ import org.example.model.interfaces.Preparable;
 import org.example.model.map.Position;
 import org.example.model.items.Item;
 import org.example.model.items.Ingredient;
+import org.example.model.items.Item;
+import org.example.model.items.Pizza;
+import org.example.model.map.Position;
+import org.example.model.recipe.Recipe;
+import org.example.model.recipe.RecipeManager;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.example.model.items.Plate;
 import org.example.model.items.Dish;
 import org.example.model.items.KitchenUtensils;
@@ -16,79 +24,127 @@ import java.util.List;
 
 public class AssemblyStation extends Station {
 
-    public AssemblyStation(Position position) {
-        super("Assembly Station", position);
+    // Stack untuk menumpuk bahan (Apapun statenya)
+    private List<Ingredient> ingredientStack;
+
+    // Slot untuk Pizza yang sudah jadi (atau Pizza yang ditaruh kembali)
+    private Pizza resultPizza;
+
+    public AssemblyStation(String name, Position position) {
+        super(name, position);
+        this.ingredientStack = new ArrayList<>();
+        this.resultPizza = null;
     }
 
+    // KEY V: INTERACT (Stack / Merge / Ambil / Taruh)
+    @Override
     public void interact(Chef chef) {
-        if (chef.isHoldingItem() && this.isEmpty()) {
-            this.addItem(chef.dropItem());
-        } else if (!chef.isHoldingItem() && !isEmpty()) {
-            chef.setInventory(this.takeItem());
-        } else if (chef.isHoldingItem() && !isEmpty()) {
-            mergeItems(chef);
+
+        // ============================================================
+        // 1. CHEF BAWA ITEM (LOGIKA MENARUH / STACKING)
+        // ============================================================
+        if (chef.isHoldingItem()) {
+            Item itemHand = chef.getInventory();
+
+            // KASUS A: CHEF BAWA INGREDIENT (BAHAN)
+            // Syarat: Meja tidak boleh ada Pizza jadi.
+            if (itemHand instanceof Ingredient) {
+                if (resultPizza == null) {
+                    // Masukkan ke stack (BEBAS RAW/CHOPPED)
+                    ingredientStack.add((Ingredient) chef.dropItem());
+                    System.out.println("Menumpuk bahan. Total stack: " + ingredientStack.size());
+                } else {
+                    System.out.println("Meja penuh ada Pizza, tidak bisa tumpuk bahan!");
+                }
+                return;
+            }
+
+            // KASUS B: CHEF BAWA PIZZA (TARUH BALIK)
+            // Syarat: Meja harus benar-benar kosong (gak ada stack, gak ada pizza lain)
+            if (itemHand instanceof Pizza) {
+                if (isEmpty()) {
+                    this.resultPizza = (Pizza) chef.dropItem();
+                    System.out.println("Menaruh Pizza kembali ke meja.");
+                } else {
+                    System.out.println("Meja tidak kosong!");
+                }
+                return;
+            }
+
+            return; // Item lain (piring dll) tidak dihandle disini
+        }
+
+        // ============================================================
+        // 2. CHEF TANGAN KOSONG (LOGIKA AMBIL / MERGE)
+        // ============================================================
+        if (!chef.isHoldingItem()) {
+
+            // KASUS C: ADA PIZZA JADI -> AMBIL
+            if (resultPizza != null) {
+                chef.setInventory(resultPizza);
+                resultPizza = null;
+                System.out.println("Chef mengambil Pizza.");
+                return;
+            }
+
+            // KASUS D: ADA TUMPUKAN BAHAN -> COBA MERGE
+            if (!ingredientStack.isEmpty()) {
+
+                // Cek Recipe Manager
+                Recipe foundRecipe = RecipeManager.getInstance().findMatchingRecipe(ingredientStack);
+
+                if (foundRecipe != null) {
+                    // --- SUKSES MERGING ---
+                    // Buat Pizza baru sesuai nama resep
+                    this.resultPizza = new Pizza(foundRecipe.getName());
+                    // Stack dibersihkan karena sudah jadi Pizza
+                    this.ingredientStack.clear();
+
+                    System.out.println("MERGING SUKSES! Jadi " + resultPizza.getName());
+                } else {
+                    // --- GAGAL MERGING ---
+                    // Jika tidak sesuai resep, Chef mengambil bahan paling atas (Undo)
+                    // Ini penting agar pemain bisa memperbaiki kesalahan tumpuk
+                    Ingredient top = ingredientStack.remove(ingredientStack.size() - 1);
+                    chef.setInventory(top);
+                    System.out.println("Resep belum cocok. Mengambil " + top.getName());
+                }
+            }
         }
     }
 
-    private void mergeItems(Chef chef) {
-        Item chefItem = chef.getInventory();
-        Item stationItem = this.getItem();
+    // ============================================================
+    // VISUAL UPDATE (Agar AssetManager tahu gambar apa yg dimunculkan)
+    // ============================================================
+    @Override
+    public Item getItem() {
+        // Prioritas 1: Tampilkan Pizza (Baik hasil rakitan atau ditaruh balik)
+        if (resultPizza != null) return resultPizza;
 
-        Plate targetPlate = null;
-
-        // Case 1: Station has Plate
-        if (stationItem instanceof Plate) {
-            targetPlate = (Plate) stationItem;
-            if (chefItem instanceof Preparable) {
-                targetPlate.addItem((Preparable) chefItem);
-                chef.dropItem();
-            } else if (chefItem instanceof KitchenUtensils) {
-                KitchenUtensils utensil = (KitchenUtensils) chefItem;
-                for (Preparable p : utensil.getContents()) {
-                    targetPlate.addItem(p);
-                }
-                utensil.emptyContents();
-            }
-        }
-        // Case 2: Chef has Plate
-        else if (chefItem instanceof Plate) {
-            targetPlate = (Plate) chefItem;
-            if (stationItem instanceof Preparable) {
-                targetPlate.addItem((Preparable) stationItem);
-                this.takeItem();
-            } else if (stationItem instanceof KitchenUtensils) {
-                KitchenUtensils utensil = (KitchenUtensils) stationItem;
-                for (Preparable p : utensil.getContents()) {
-                    targetPlate.addItem(p);
-                }
-                utensil.emptyContents();
-            }
+        // Prioritas 2: Tampilkan bahan paling atas tumpukan
+        if (!ingredientStack.isEmpty()) {
+            return ingredientStack.get(ingredientStack.size() - 1);
         }
 
-        // Check for Recipe Completion
-        if (targetPlate != null) {
-            checkAndAssembleRecipe(targetPlate);
-        }
+        return null; // Meja kosong
     }
 
-    private void checkAndAssembleRecipe(Plate plate) {
-        List<Ingredient> ingredients = new ArrayList<>();
-        for (Preparable p : plate.getContents()) {
-            if (p instanceof Ingredient) {
-                ingredients.add((Ingredient) p);
-            }
-        }
+    @Override
+    public boolean isEmpty() {
+        return resultPizza == null && ingredientStack.isEmpty();
+    }
 
-        Recipe match = RecipeManager.getInstance().findMatchingRecipe(ingredients);
-        if (match != null) {
-            // Create the dish
-            Dish newDish = new Dish(match.getName());
-            newDish.setComponents(new ArrayList<>(ingredients));
-
-            // Replace plate contents
-            plate.emptyContents();
-            plate.addItem(newDish);
-            System.out.println("Assembled: " + match.getName());
+    // Method removeItem default (Hanya dipakai jika logika interact default dipanggil, disini kita custom)
+    @Override
+    public Item removeItem() {
+        if (resultPizza != null) {
+            Item temp = resultPizza;
+            resultPizza = null;
+            return temp;
         }
+        if (!ingredientStack.isEmpty()) {
+            return ingredientStack.remove(ingredientStack.size() - 1);
+        }
+        return null;
     }
 }

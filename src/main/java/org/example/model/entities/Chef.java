@@ -6,6 +6,7 @@ import org.example.model.map.Direction;
 import org.example.model.map.Position;
 
 import org.example.model.stations.Station;
+import org.example.model.entities.GameObject;
 
 /**
  * Kelas Chef yang merepresentasikan karakter pemain
@@ -15,9 +16,9 @@ public class Chef extends GameObject {
     private String id;
     private String name;
     private Direction direction;
-    private Item inventory;
+    private Item inventory; // Barang yang dipegang
     private ChefState state;
-    private Boolean isActive;
+    private boolean isActive;
 
     // Dash properties
     private long lastDashTime = 0;
@@ -29,147 +30,70 @@ public class Chef extends GameObject {
         this.id = id;
         this.name = name;
         this.direction = Direction.DOWN;
-        this.state = ChefState.IDLE;
         this.inventory = null;
+        this.state = ChefState.IDLE;
         this.isActive = false;
     }
 
-    public Chef(String id, String name, int x, int y) {
-        super(x, y);
-        this.id = id;
-        this.name = name;
-        this.direction = Direction.DOWN;
-        this.state = ChefState.IDLE;
-        this.inventory = null;
-        this.isActive = false;
-    }
+    // ==========================================
+    // 1. FITUR MOVEMENT (Dari Fathan) - YANG HILANG
+    // ==========================================
+    public void move(Direction dir) {
+        // Update koordinat posisi
+        int newX = this.position.getX() + dir.getDx();
+        int newY = this.position.getY() + dir.getDy();
 
-    // Method untuk menggerakkan chef
-    public void move(Direction direction) {
-        if (direction == null)
-            return;
+        // Kita update object position-nya
+        this.position = new Position(newX, newY);
 
-        this.direction = direction;
+        // Update state visual
         this.state = ChefState.MOVE;
-        this.position.translate(direction.getDx(), direction.getDy());
     }
 
-    // Method untuk mencoba bergerak (cek arah dulu)
-    public boolean tryMove(Direction direction, int mapWidth, int mapHeight) {
-        if (direction == null)
-            return false;
+    // ==========================================
+    // 2. FITUR INTERAKSI (Dari Anda)
+    // ==========================================
 
-        // Jika belum menghadap arah tersebut, hanya ubah arah
-        if (!this.direction.equals(direction)) {
-            this.direction = direction;
-            return false;
-        }
-
-        // Cek batas map
-        int newX = this.position.getX() + direction.getDx();
-        int newY = this.position.getY() + direction.getDy();
-
-        if (newX >= 0 && newX < mapWidth && newY >= 0 && newY < mapHeight) {
-            this.state = ChefState.MOVE;
-            this.position.translate(direction.getDx(), direction.getDy());
-            return true;
-        }
-
-        return false;
+    // Method Helper: Ambil item (Pickup)
+    public void setInventory(Item item) {
+        this.inventory = item;
+        this.state = ChefState.HOLDING_ITEM;
     }
 
-    // Method untuk mengambil item
-    public void pickUpItem(Item item) {
-        if (!isHoldingItem() && item != null) {
-            this.inventory = item;
-            this.state = ChefState.HOLDING_ITEM;
-        }
-    }
-
-    // Method untuk meletakkan item
+    // Method Helper: Taruh item (Drop)
     public Item dropItem() {
-        if (isHoldingItem()) {
-            Item droppedItem = this.inventory;
-            this.inventory = null;
-            this.state = ChefState.IDLE;
-            return droppedItem;
-        }
-        return null;
-    }
-
-    // Method untuk interaksi dengan station
-    public void interactStation(Station station) {
-        if (station != null) {
-            station.interact(this);
-        }
-    }
-
-    // Method untuk mendapatkan posisi di depan chef
-    public Position getFrontPosition() {
-        int frontX = this.position.getX() + this.direction.getDx();
-        int frontY = this.position.getY() + this.direction.getDy();
-        return new Position(frontX, frontY);
-    }
-
-    // Cek apakah chef sedang sibuk
-    public boolean isBusy() {
-        return this.state == ChefState.COOKING || this.state == ChefState.CUTTING;
-    }
-
-    // Set state ke IDLE
-    public void setIdle() {
+        Item item = this.inventory;
+        this.inventory = null;
         this.state = ChefState.IDLE;
+        return item;
     }
 
-    // Cek apakah sedang memegang item
     public boolean isHoldingItem() {
         return this.inventory != null;
     }
 
-    // Getter dan Setter
-    public String getId() {
-        return id;
-    }
+    // ==========================================
+    // 3. GETTERS & SETTERS (Wajib Ada)
+    // ==========================================
+    public String getId() { return id; }
+    public String getName() { return name; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public Position getPosition() { return position; }
 
-    public String getName() {
-        return name;
-    }
+    // Helper untuk GameController biar gampang akses X/Y
+    public int getX() { return position.getX(); }
+    public int getY() { return position.getY(); }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Direction getDirection() { return direction; }
+    public void setDirection(Direction direction) { this.direction = direction; }
 
-    public Direction getDirection() {
-        return direction;
-    }
+    public Item getInventory() { return inventory; }
 
-    public void setDirection(Direction direction) {
-        this.direction = direction;
-    }
+    public ChefState getState() { return state; }
+    public void setState(ChefState state) { this.state = state; }
 
-    public ChefState getState() {
-        return state;
-    }
-
-    public void setState(ChefState state) {
-        this.state = state;
-    }
-
-    public Item getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(Item inventory) {
-        this.inventory = inventory;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
+    public boolean getIsActive() { return isActive; }
+    public void setIsActive(boolean isActive) { this.isActive = isActive; }
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;

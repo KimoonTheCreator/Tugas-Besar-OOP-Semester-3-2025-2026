@@ -1,54 +1,58 @@
 package org.example.model.stations;
 
 import org.example.model.entities.Chef;
+import org.example.model.entities.GameObject; // Pastikan GameObject ada di package entities
 import org.example.model.items.Item;
 import org.example.model.map.Position;
 
-public abstract class Station {
-    private String name;
-    private Position position;
+// KITA GUNAKAN extends GameObject
+public abstract class Station extends GameObject {
+
+    protected String name;
     protected Item item;
 
     public Station(String name, Position position) {
+        super(position); // Panggil constructor GameObject
         this.name = name;
-        this.position = position;
         this.item = null;
     }
 
-    /**
-     * Handles item movement (Pick Up / Drop).
-     * Triggered by 'F' (or default Interact key).
-     */
+    // ==========================================
+    // METHOD INTERAKSI UTAMA
+    // ==========================================
+
+    // Abstract: Wajib diisi oleh anak (CuttingStation, dll)
     public abstract void interact(Chef chef);
 
-    /**
-     * Handles processing actions (Cut, Wash).
-     * Triggered by 'V' (Action key).
-     */
+    // Concrete: Default kosong (untuk Trash/Storage yang tidak butuh aksi kerja)
     public void action(Chef chef) {
-        // Default: Do nothing
+        // Default: Tidak melakukan apa-apa
     }
 
-    /**
-     * Updates the station state based on time.
-     * 
-     * @param deltaTime Time elapsed since last frame in seconds.
-     */
-    public void update(double deltaTime) {
-        // Default behavior: do nothing
+    // Helper: Logika default interaksi (Tukar barang)
+    // Dipakai oleh CuttingStation/WashingStation saat tombol V ditekan
+    public void interactDefault(Chef chef) {
+        if (this.isEmpty() && chef.isHoldingItem()) {
+            this.addItem(chef.dropItem());
+        } else if (!this.isEmpty() && !chef.isHoldingItem()) {
+            chef.setInventory(this.removeItem());
+        }
     }
 
-    public boolean isEmpty() {
-        return this.item == null;
-    }
+    // ==========================================
+    // METHOD JEMBATAN (COMPATIBILITY)
+    // Agar kode Anda (addItem) dan kode teman (placeItem) sama-sama jalan
+    // ==========================================
 
-    public boolean addItem(Item item) {
-        if (isEmpty()) {
+    public boolean placeItem(Item item) {
+        if (isEmpty() && item != null) {
             this.item = item;
             return true;
         }
         return false;
     }
+
+    public void addItem(Item item) { this.placeItem(item); }
 
     public Item takeItem() {
         Item temp = this.item;
@@ -56,28 +60,13 @@ public abstract class Station {
         return temp;
     }
 
-    public String getName() {
-        return name;
-    }
+    public Item removeItem() { return this.takeItem(); }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Item getItem() { return this.item; }
+    public Item getCurrentItem() { return this.item; } // Alias
 
-    public Position getPosition() {
-        return position;
-    }
+    public boolean isEmpty() { return this.item == null; }
+    public String getName() { return name; }
 
-    public void setPosition(Position position) {
-        this.position = position;
-    }
-
-    public Item getItem() {
-        return item;
-    }
-
-    public void setItem(Item item) {
-        this.item = item;
-    }
-
+    // TIDAK PERLU Getter/Setter Position karena sudah ada di GameObject
 }

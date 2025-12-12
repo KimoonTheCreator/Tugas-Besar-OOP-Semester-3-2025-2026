@@ -1,51 +1,37 @@
-package org.example.model.items;
+package org.example.model.stations; // Pindah package ke stations!
 
-import org.example.model.interfaces.CookingDevice;
-import org.example.model.interfaces.Preparable;
-import org.example.model.items.Ingredient;
+import org.example.model.items.Item;
+import org.example.model.items.Pizza;
+import org.example.model.enums.IngredientState;
+import org.example.model.map.Position;
 
-public class Oven extends KitchenUtensils implements CookingDevice {
+// OVEN ADALAH STATION, BUKAN UTENSIL
+public class Oven extends CookingStation {
 
-    public Oven() {
-        super("Oven");
+    public Oven(String name, Position position) {
+        // Set nama default jadi "Oven"
+        super(name, position);
     }
 
-    // --- IMPLEMENTASI INTERFACE CookingDevice ---
-
+    // --- ATURAN SPESIFIK OVEN ---
     @Override
-    public boolean isPortable() {
+    protected boolean shouldAcceptItem(Item item) {
+        // Validasi 1: Harus Pizza
+        if (item instanceof Pizza) {
+            Pizza pizza = (Pizza) item;
+
+            // Validasi 2: Harus Mentah (RAW)
+            // Biar player gak masukin pizza gosong/matang balik ke oven
+            if (pizza.getState() == IngredientState.RAW) {
+                return true; // DITERIMA
+            } else {
+                System.out.println("Hanya Pizza MENTAH yang boleh dipanggang!");
+                return false;
+            }
+        }
+
+        // Item bukan Pizza
+        System.out.println("Oven hanya menerima Pizza!");
         return false;
-    }
-
-    @Override
-    public int capacity() {
-        return 1;
-    }
-
-    @Override
-    public boolean canAccept(Preparable item) {
-        if (item instanceof Dish) {
-            String name = ((Dish) item).getName();
-            return name.contains("Pizza") || name.contains("Uncooked");
-        }
-        // Allow raw ingredients if needed, usage specific. For now focusing on Dish.
-        return item instanceof Ingredient;
-    }
-
-    @Override
-    public void addIngredient(Preparable item) {
-        if (canAccept(item) && this.contents.size() < capacity()) {
-            super.addItem(item);
-            System.out.println(((Item) item).getName() + " dimasukkan ke dalam Oven.");
-        } else {
-            System.out.println("Oven menolak! (Mungkin penuh atau bukan Pizza)");
-        }
-    }
-
-    @Override
-    public void update(double deltaTime) {
-        for (Preparable item : this.contents) {
-            item.addCookingDuration(deltaTime);
-        }
     }
 }
