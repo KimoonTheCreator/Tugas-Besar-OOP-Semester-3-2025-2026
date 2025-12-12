@@ -65,4 +65,8 @@ public class Tile {
     public String toString() {
         return String.valueOf(type.getSymbol());
     }
+
+    public boolean hasStation() {
+        return station != null;
+    }
 }

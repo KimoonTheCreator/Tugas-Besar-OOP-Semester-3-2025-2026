@@ -12,6 +12,7 @@ import javafx.stage.Stage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.control.Button;
 import org.example.model.enums.GameDifficulty;
+import org.example.controller.GameController;
 
 public class MainMenuController {
 
