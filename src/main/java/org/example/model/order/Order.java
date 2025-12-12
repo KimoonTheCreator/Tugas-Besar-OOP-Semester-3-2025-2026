@@ -46,4 +46,19 @@ public class Order {
     public Dish getDish() {
         return dish;
     }
+
+    public static final double ORDER_DURATION = 60.0;
+
+    public org.example.model.recipe.Recipe getRecipe() {
+        // Simple logic: remove "Pizza " from dish name to get recipe name
+        String dishName = dish.getName();
+        String recipeName = dishName.replace("Pizza ", "");
+
+        for (org.example.model.recipe.Recipe r : org.example.model.recipe.RecipeManager.getInstance().getRecipes()) {
+            if (r.getName().equalsIgnoreCase(recipeName)) {
+                return r;
+            }
+        }
+        return null;
+    }
 }

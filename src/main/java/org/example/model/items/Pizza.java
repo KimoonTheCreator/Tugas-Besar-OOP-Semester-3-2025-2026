@@ -28,7 +28,9 @@ public class Pizza extends Item implements Preparable {
     // ==========================================
 
     /**
-     * Method ini WAJIB dipanggil oleh CookingStation di dalam method update(deltaTime).
+     * Method ini WAJIB dipanggil oleh CookingStation di dalam method
+     * update(deltaTime).
+     * 
      * @param deltaTime Waktu yang berlalu sejak frame terakhir (detik).
      */
     public void addCookingDuration(double deltaTime) {
@@ -125,7 +127,8 @@ public class Pizza extends Item implements Preparable {
 
     // Helper untuk UI/Render (Mendapatkan progress bar masak 0.0 - 1.0)
     public float getCookProgress() {
-        if (state == IngredientState.BURNED) return 1.0f;
+        if (state == IngredientState.BURNED)
+            return 1.0f;
         return (float) Math.min(cookingDuration / TIME_TO_COOK, 1.0);
     }
 }

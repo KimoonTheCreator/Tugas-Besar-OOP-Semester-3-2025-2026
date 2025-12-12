@@ -1,9 +1,10 @@
-package org.example.model.stations; // Pindah package ke stations!
+package org.example.model.items; // Pindah package ke stations!
 
 import org.example.model.items.Item;
 import org.example.model.items.Pizza;
 import org.example.model.enums.IngredientState;
 import org.example.model.map.Position;
+import org.example.model.stations.CookingStation;
 
 // OVEN ADALAH STATION, BUKAN UTENSIL
 public class Oven extends CookingStation {

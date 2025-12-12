@@ -27,7 +27,8 @@ public class Plate extends KitchenUtensils {
         }
 
         // Cek 2: Piring Sudah Ada Isi -> Tolak
-        // (Mencegah player menumpuk 2 pizza atau menumpuk bahan mentah ke pizza yang sudah jadi)
+        // (Mencegah player menumpuk 2 pizza atau menumpuk bahan mentah ke pizza yang
+        // sudah jadi)
         if (!this.getContents().isEmpty()) {
             System.out.println("Gagal! Piring sudah terisi.");
             return;
@@ -37,9 +38,14 @@ public class Plate extends KitchenUtensils {
         super.addItem(item);
     }
 
-    // Adapter method untuk support kode teman (jika ada yang pass Ingredient specific)
+    // Adapter method untuk support kode teman (jika ada yang pass Ingredient
+    // specific)
     public void addIngredients(Ingredient ingredient) {
         this.addItem(ingredient);
+    }
+
+    public void addContent(Preparable item) {
+        this.addItem(item);
     }
 
     // ==========================================

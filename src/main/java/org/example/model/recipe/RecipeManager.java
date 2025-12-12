@@ -38,7 +38,8 @@ public class RecipeManager {
 
     private void initializeRecipes() {
         // Ganti nama resep jadi simpel: "Margherita", "Sausage", "Chicken"
-        // Agar nanti pas bikin Pizza jadi: new Pizza("Margherita") -> Name: "Pizza Margherita"
+        // Agar nanti pas bikin Pizza jadi: new Pizza("Margherita") -> Name: "Pizza
+        // Margherita"
 
         // 1. Margherita
         Recipe margherita = new Recipe("Margherita");

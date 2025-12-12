@@ -177,10 +177,10 @@ public class MainMenuController {
                         gameController.switchChef();
                         break;
                     case F:
-                        gameController.handlePickupCommand();
+                        gameController.handlePickupCommand(); // PICKUP / TARUH (F)
                         break;
                     case V:
-                        gameController.handleInteractCommand();
+                        gameController.handleInteractCommand(); // INTERACT / PROCESS (V)
                         break;
                     case SPACE:
                         gameController.handleDashCommand();

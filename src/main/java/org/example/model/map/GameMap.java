@@ -3,7 +3,7 @@ package org.example.model.map;
 import org.example.model.enums.TileType;
 import org.example.model.stations.*;
 import org.example.model.order.OrderManager;
-import org.example.model.stations.Oven;
+import org.example.model.items.Oven;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,8 @@ public class GameMap {
         parseMap(mapLayout);
     }
 
-    // ... (method parseMap dan initializeStationLogic SAMA PERSIS seperti sebelumnya) ...
+    // ... (method parseMap dan initializeStationLogic SAMA PERSIS seperti
+    // sebelumnya) ...
     // Copy-paste isi method parseMap & initializeStationLogic Anda di sini
 
     private void parseMap(String[] mapLayout) {
@@ -54,7 +55,8 @@ public class GameMap {
                 TileType type = TileType.fromSymbol(symbol);
                 Tile tile = new Tile(type, x, y);
                 tiles[x][y] = tile;
-                if (type == TileType.SPAWN_POINT) spawnPoints.add(new Position(x, y));
+                if (type == TileType.SPAWN_POINT)
+                    spawnPoints.add(new Position(x, y));
                 initializeStationLogic(tile, type, symbol, x, y);
             }
             for (int x = row.length(); x < width; x++) {
@@ -74,14 +76,19 @@ public class GameMap {
                 // LOGIKA PEMETAAN BAHAN (Hardcoded Coordinates)
                 // Baris ke-5 (Index 4) -> x=4, 6, 8, 10
                 if (y == 4) {
-                    if (x == 4) ingredientName = "Tomat";
-                    else if (x == 6) ingredientName = "Keju";
-                    else if (x == 8) ingredientName = "Sosis";
-                    else if (x == 10) ingredientName = "Ayam";
+                    if (x == 4)
+                        ingredientName = "Tomat";
+                    else if (x == 6)
+                        ingredientName = "Keju";
+                    else if (x == 8)
+                        ingredientName = "Sosis";
+                    else if (x == 10)
+                        ingredientName = "Ayam";
                 }
                 // Baris ke-10 (Index 9) -> x=6
                 else if (y == 9) {
-                    if (x == 6) ingredientName = "Adonan"; // Adonan
+                    if (x == 6)
+                        ingredientName = "Adonan"; // Adonan
                 }
 
                 System.out.println("Spawn Storage di (" + x + "," + y + ") isinya: " + ingredientName);
@@ -89,28 +96,47 @@ public class GameMap {
                 break;
 
             // ... Case station lain (Cutting, Cooking, dll) SAMA SEPERTI SEBELUMNYA ...
-            case CUTTING_STATION: station = new CuttingStation("CuttingBoard", pos); break;
-            case COOKING_STATION: station = new Oven("Oven", pos); break;
-            case ASSEMBLY_STATION: station = new AssemblyStation("Assembly", pos); break;
-            case WASHING_STATION: station = new WashingStation("Sink", pos); break;
-            case TRASH_STATION: station = new TrashStation("Trash", pos); break;
-            case SERVING_COUNTER: station = new ServingCounter("Serving", pos, this.orderManager); break;
-            case PLATE_STORAGE: station = new PlateStorage("PlateStack", pos); break;
+            case CUTTING_STATION:
+                station = new CuttingStation("CuttingBoard", pos);
+                break;
+            case COOKING_STATION:
+                station = new Oven("Oven", pos);
+                break;
+            case ASSEMBLY_STATION:
+                station = new AssemblyStation("Assembly", pos);
+                break;
+            case WASHING_STATION:
+                station = new WashingStation("Sink", pos);
+                break;
+            case TRASH_STATION:
+                station = new TrashStation("Trash", pos);
+                break;
+            case SERVING_COUNTER:
+                station = new ServingCounter("Serving", pos);
+                break;
+            case PLATE_STORAGE:
+                station = new PlateStorage(pos);
+                break;
 
-            default: station = null; break;
+            default:
+                station = null;
+                break;
         }
 
-        if (station != null) tile.setStation(station);
+        if (station != null)
+            tile.setStation(station);
     }
 
     // --- PERBAIKAN ISWALKABLE ---
 
     // Versi 1: Cek koordinat Integer
     public boolean isWalkable(int x, int y) {
-        if (!isValidPosition(x, y)) return false;
+        if (!isValidPosition(x, y))
+            return false;
 
         // Pastikan tile tidak null sebelum memanggil methodnya
-        if (tiles[x][y] == null) return false;
+        if (tiles[x][y] == null)
+            return false;
 
         return tiles[x][y].isWalkable();
     }
@@ -125,7 +151,8 @@ public class GameMap {
     }
 
     public Tile getTile(int x, int y) {
-        if (isValidPosition(x, y)) return tiles[x][y];
+        if (isValidPosition(x, y))
+            return tiles[x][y];
         return null;
     }
 
@@ -133,8 +160,19 @@ public class GameMap {
         return getTile(pos.getX(), pos.getY());
     }
 
-    public OrderManager getOrderManager() { return orderManager; }
-    public List<Position> getSpawnPoints() { return spawnPoints; }
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
+    public OrderManager getOrderManager() {
+        return orderManager;
+    }
+
+    public List<Position> getSpawnPoints() {
+        return spawnPoints;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
 }

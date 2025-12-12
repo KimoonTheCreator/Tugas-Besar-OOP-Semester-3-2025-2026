@@ -9,6 +9,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.layout.StackPane; // Explicit import just in case
 import javafx.stage.Stage;
 import javafx.geometry.Pos;
 
@@ -19,10 +20,18 @@ import org.example.model.map.Position;
 import org.example.model.map.Tile;
 import org.example.model.enums.TileType;
 import org.example.model.enums.GameDifficulty;
-import org.example.model.stations.*;
+import org.example.model.items.Pizza;
+import org.example.model.items.Ingredient;
 import org.example.model.items.Plate;
 import org.example.model.items.Dish;
 import org.example.model.order.Order;
+import org.example.model.recipe.RecipeManager;
+import org.example.model.stations.*;
+import org.example.model.stations.Station;
+import org.example.model.stations.CookingStation;
+import org.example.model.stations.WashingStation;
+import org.example.model.stations.CuttingStation;
+import org.example.model.stations.ServingCounter;
 import org.example.view.AssetManager;
 import org.example.controller.PauseMenuController;
 import org.example.controller.StageOverController;
@@ -36,12 +45,18 @@ import java.util.Map;
 public class GameController {
 
     // --- FXML UI COMPONENTS ---
-    @FXML private GridPane mapGrid;
-    @FXML private Label chefInfoLabel;
-    @FXML private Label positionInfoLabel;
-    @FXML private Label scoreLabel;
-    @FXML private AnchorPane gameRoot;
-    @FXML private VBox ordersContainer;
+    @FXML
+    private GridPane mapGrid;
+    @FXML
+    private Label chefInfoLabel;
+    @FXML
+    private Label positionInfoLabel;
+    @FXML
+    private Label scoreLabel;
+    @FXML
+    private AnchorPane gameRoot;
+    @FXML
+    private VBox ordersContainer;
 
     // --- GAME STATE ---
     private final GameMap gameMap;
@@ -62,12 +77,123 @@ public class GameController {
 
     // --- ENGINE & VISUALS ---
     private AnimationTimer gameLoop;
-    // Map untuk visual Chef
-    private final Map<Chef, ImageView> chefViews = new HashMap<>();
+    // Map untuk visual Chef (Sekarang StackPane biar bisa ada Item di atas Chef)
+    private final Map<Chef, StackPane> chefViews = new HashMap<>();
     // Map untuk visual Item di atas meja (Station)
     private final Map<Position, ImageView> stationItemViews = new HashMap<>();
-    // Map untuk visual Order UI
+    // Map untuk visual Order
     private final Map<Order, VBox> orderViews = new HashMap<>();
+
+    // Pending Returns (Plate kotor kembali ke storage)
+    private final List<PendingPlateReturn> pendingReturns = new ArrayList<>();
+
+    // Inner class helper
+    private class PendingPlateReturn {
+        Plate plate;
+        double timer;
+
+        public PendingPlateReturn(Plate plate, double timer) {
+            this.plate = plate;
+            this.timer = timer;
+        }
+    }
+
+    // ... [existing code] ...
+
+    private void setupChefsViews() {
+        for (Chef chef : chefs) {
+            StackPane chefView = createChefView(chef.getId(), chef.getDirection());
+            chefViews.put(chef, chefView);
+            mapGrid.add(chefView, chef.getX(), chef.getY());
+            if (chef.getIsActive()) {
+                chefView.toFront();
+                // Add highlight/border for active chef logic if needed
+            }
+        }
+    }
+
+    private StackPane createChefView(String id, Direction dir) {
+        StackPane stack = new StackPane();
+        stack.setAlignment(Pos.CENTER);
+
+        // Layer 1: Chef Body
+        Image chefImage = AssetManager.getChefImage(id, dir);
+        ImageView chefImageView = new ImageView(chefImage);
+        resizeView(chefImageView); // Preserves Aspect Ratio? setFit 50x50
+
+        // Layer 2: Item Held (Default hidden/empty)
+        ImageView itemImageView = new ImageView();
+        itemImageView.setFitWidth(30); // Lebih kecil dari tile
+        itemImageView.setFitHeight(30);
+        itemImageView.setTranslateY(10); // Agak turun biar kayak dipegang
+
+        stack.getChildren().addAll(chefImageView, itemImageView);
+        return stack;
+    }
+
+    private void resizeView(ImageView view) {
+        view.setFitWidth(AssetManager.TILE_SIZE);
+        view.setFitHeight(AssetManager.TILE_SIZE);
+    }
+
+    private void updateChefPositionInView(Chef chef) {
+        StackPane chefView = chefViews.get(chef);
+        if (chefView != null) {
+            GridPane.setColumnIndex(chefView, chef.getX());
+            GridPane.setRowIndex(chefView, chef.getY());
+        }
+    }
+
+    private void updateChefDirectionView(Chef chef) {
+        StackPane chefView = chefViews.get(chef);
+        if (chefView != null && !chefView.getChildren().isEmpty()) {
+            // Update Chef Body Image (Index 0)
+            ImageView body = (ImageView) chefView.getChildren().get(0);
+            body.setImage(AssetManager.getChefImage(chef.getId(), chef.getDirection()));
+        }
+    }
+
+    // UPDATE VISUALS (Termasuk Item di Tangan)
+    private void updateVisuals() {
+        // 1. Update Items on Stations
+        for (Map.Entry<Position, ImageView> entry : stationItemViews.entrySet()) {
+            Position pos = entry.getKey();
+            ImageView itemView = entry.getValue();
+
+            Tile tile = gameMap.getTile(pos.getX(), pos.getY());
+            if (tile != null && tile.getStation() != null) {
+                Station station = tile.getStation();
+                Image newItemImg = AssetManager.getItemImage(station.getItem());
+                itemView.setImage(newItemImg);
+            }
+        }
+
+        // 2. Update Visual Chef (Posisi & Item Held)
+        for (Chef chef : chefs) {
+            updateChefPositionInView(chef);
+            updateChefHeldItem(chef); // New Helper
+        }
+    }
+
+    private void updateChefHeldItem(Chef chef) {
+        StackPane chefView = chefViews.get(chef);
+        if (chefView != null && chefView.getChildren().size() > 1) {
+            ImageView itemView = (ImageView) chefView.getChildren().get(1);
+
+            if (chef.isHoldingItem()) {
+                Image img = AssetManager.getItemImage(chef.getInventory());
+                itemView.setImage(img);
+                itemView.setVisible(true);
+            } else {
+                itemView.setImage(null);
+                itemView.setVisible(false);
+            }
+        }
+    }
+
+    // Map untuk visual Order UI
+    // private final Map<Order, VBox> orderViews = new HashMap<>(); // REMOVED
+    // DUPLICATE
 
     // --- SUB-CONTROLLERS ---
     private Parent pauseMenu;
@@ -104,9 +230,9 @@ public class GameController {
     @FXML
     public void initialize() {
         System.out.println("Initializing Game Controller...");
-        drawInitialMap();    // Gambar Tile & Station
-        setupChefsViews();   // Gambar Chef
-        updateInfoBar();     // UI Teks Awal
+        drawInitialMap(); // Gambar Tile & Station
+        setupChefsViews(); // Gambar Chef
+        updateInfoBar(); // UI Teks Awal
         System.out.println("Game Ready. Waiting for Start command.");
     }
 
@@ -120,7 +246,8 @@ public class GameController {
         // Reset Order State
         this.activeOrders.clear();
         this.orderViews.clear();
-        if (ordersContainer != null) ordersContainer.getChildren().clear();
+        if (ordersContainer != null)
+            ordersContainer.getChildren().clear();
         this.timeSinceLastOrder = ORDER_SPAWN_INTERVAL - 3.0; // Spawn order pertama dalam 3 detik
 
         System.out.println("Starting Game: " + difficulty + " (" + stageTimeRemaining + "s)");
@@ -132,14 +259,18 @@ public class GameController {
     // =========================================================
 
     private void startGameLoop() {
-        if (gameLoop != null) gameLoop.stop();
+        if (gameLoop != null)
+            gameLoop.stop();
 
         gameLoop = new AnimationTimer() {
             private long lastTime = 0;
 
             @Override
             public void handle(long now) {
-                if (isPaused || isFinished) return;
+                if (isPaused || isFinished) {
+                    lastTime = 0; // Reset to prevent time jump when resume
+                    return;
+                }
 
                 if (lastTime == 0) {
                     lastTime = now;
@@ -168,7 +299,7 @@ public class GameController {
         }
 
         // 2. Chef Cooldowns (Dash, etc)
-        for(Chef c : chefs) {
+        for (Chef c : chefs) {
             c.update(deltaTime);
         }
 
@@ -190,32 +321,112 @@ public class GameController {
                     } else if (station instanceof CuttingStation) {
                         ((CuttingStation) station).update(deltaTime);
                     }
+
+                    // Logic Serving Counter Validation
+                    if (station instanceof ServingCounter) {
+                        ServingCounter sc = (ServingCounter) station;
+                        Plate served = sc.getServedPlate();
+                        // DEBUG: Uncomment below to trace
+                        // System.out.println("Checking ServingCounter, served plate: " + served);
+                        if (served != null) {
+                            System.out.println("FOUND PLATE ON SERVING COUNTER!");
+                            validateServedPlate(served);
+                            sc.clearServedPlate();
+                        }
+                    }
                 }
             }
         }
 
-        // 5. Update UI Text
-        updateInfoBar();
-    }
-
-    private void updateVisuals() {
-        // Update Items on Stations
-        for (Map.Entry<Position, ImageView> entry : stationItemViews.entrySet()) {
-            Position pos = entry.getKey();
-            ImageView itemView = entry.getValue();
-
-            Tile tile = gameMap.getTile(pos.getX(), pos.getY());
-            if (tile != null && tile.getStation() != null) {
-                Station station = tile.getStation();
-                // Ambil gambar item jika ada, jika null set null
-                Image newItemImg = AssetManager.getItemImage(station.getItem());
-                itemView.setImage(newItemImg);
+        // 6. Validasi Pending Returns (Dirty Plates)
+        List<PendingPlateReturn> returned = new ArrayList<>();
+        for (PendingPlateReturn pr : pendingReturns) {
+            pr.timer -= deltaTime;
+            if (pr.timer <= 0) {
+                returnPlateToStorage(pr.plate);
+                returned.add(pr);
             }
         }
+        pendingReturns.removeAll(returned);
 
-        // Update Visual Chef (Posisi smooth jika perlu, tapi disini grid based)
-        for (Chef chef : chefs) {
-            updateChefPositionInView(chef);
+        // 7. Update UI info
+        updateInfoBar();
+        updateOrderVisuals();
+    }
+
+    private void updateOrderVisuals() {
+        // Update setiap order view (timer bar)
+        for (Order order : activeOrders) {
+            updateOrderView(order);
+        }
+    }
+
+    private void returnPlateToStorage(Plate plate) {
+        // Cari PlateStorage di map
+        for (int y = 0; y < gameMap.getHeight(); y++) {
+            for (int x = 0; x < gameMap.getWidth(); x++) {
+                Tile tile = gameMap.getTile(x, y);
+                if (tile.getStation() instanceof PlateStorage) {
+                    ((PlateStorage) tile.getStation()).addPlate(plate);
+                    return;
+                }
+            }
+        }
+    }
+
+    private void validateServedPlate(Plate plate) {
+        if (plate.getContents().isEmpty())
+            return;
+
+        // Asumsi piring cuma punya 1 pizza
+        Object content = plate.getContents().iterator().next();
+        if (content instanceof Pizza) {
+            Pizza servedPizza = (Pizza) content;
+            Order matchingOrder = null;
+
+            // Cari order yang cocok
+            System.out
+                    .println("VALIDATING SERVED PLATE: " + servedPizza.getName() + " State: " + servedPizza.getState());
+            System.out.println("Active Orders Count: " + activeOrders.size());
+
+            for (Order order : activeOrders) {
+                System.out.println(" - Checking against: " + order.getDish().getName());
+                
+                // servedPizza.getName() returns "Pizza Margherita"
+                // order.getDish().getName() returns "Margherita"
+                // So we need to match: "Pizza " + orderName == servedName
+                String expectedPizzaName = "Pizza " + order.getDish().getName();
+                
+                if (expectedPizzaName.equals(servedPizza.getName())
+                        && servedPizza.getState() == org.example.model.enums.IngredientState.COOKED) {
+                    matchingOrder = order;
+                    break;
+                }
+            }
+
+            if (matchingOrder != null) {
+                // SUCCESS
+                score += matchingOrder.getReward();
+                activeOrders.remove(matchingOrder);
+                removeOrderView(matchingOrder);
+                System.out.println("ORDER SERVED! +Points: " + matchingOrder.getReward());
+            } else {
+                // WRONG ORDER / BURNT - No matching order found
+                System.out.println("VALIDATION FAILED for " + servedPizza.getName());
+                int wrongDishPenalty = -50; // Fixed penalty for serving wrong dish
+                score += wrongDishPenalty;
+                if (score < 0)
+                    score = 0;
+                System.out.println("WRONG DISH! Penalty: " + wrongDishPenalty);
+            }
+
+            // Logic Return:
+            plate.markAsDirty();
+            pendingReturns.add(new PendingPlateReturn(plate, 10.0));
+            System.out.println("Plate is dirty and will return to storage in 10s.");
+
+            updateOrderVisuals();
+            updateInfoBar();
         }
     }
 
@@ -224,7 +435,8 @@ public class GameController {
     // =========================================================
 
     public void handleMoveCommand(Direction dir) {
-        if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
         Chef activeChef = getActiveChef();
         int newX = activeChef.getX() + dir.getDx();
@@ -245,7 +457,8 @@ public class GameController {
     }
 
     public void handleDashCommand() {
-        if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
         Chef activeChef = getActiveChef();
         if (activeChef.canDash()) {
@@ -271,7 +484,8 @@ public class GameController {
 
     // INTERACT = KEY 'V' (Pick Up / Drop Item)
     public void handlePickupCommand() {
-        if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
         Chef activeChef = getActiveChef();
         Position facingPos = activeChef.getPosition().getFacingPosition(activeChef.getDirection());
@@ -282,22 +496,15 @@ public class GameController {
             if (tile.hasStation()) {
                 Station s = tile.getStation();
                 s.interact(activeChef); // Logic Pick/Drop ada di Station.interact
-
-                // Khusus Serving Counter: Cek Validasi Makanan
-                if (s instanceof ServingCounter) {
-                    ServingCounter sc = (ServingCounter) s;
-                    if (sc.getServedPlate() != null) {
-                        validateServedDish(sc.getServedPlate());
-                        sc.clearServedPlate();
-                    }
-                }
+                // ServingCounter validation is now handled in updateGameLogic loop
             }
         }
     }
 
     // ACTION = KEY 'C' (Chop / Wash / Cook Process)
     public void handleInteractCommand() {
-        if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
         Chef activeChef = getActiveChef();
         Position facingPos = activeChef.getPosition().getFacingPosition(activeChef.getDirection());
@@ -313,7 +520,8 @@ public class GameController {
     }
 
     public void switchChef() {
-        if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
         Chef oldChef = getActiveChef();
         oldChef.setIsActive(false);
@@ -324,7 +532,7 @@ public class GameController {
         newChef.setIsActive(true);
 
         // Update Z-Index visual agar chef aktif di depan
-        ImageView activeView = chefViews.get(newChef);
+        StackPane activeView = chefViews.get(newChef);
         if (activeView != null) {
             activeView.toFront();
         }
@@ -354,7 +562,8 @@ public class GameController {
             if (order.isExpired()) {
                 expiredOrders.add(order);
                 score += order.getPenalty(); // Kurangi skor
-                if (score < 0) score = 0;
+                if (score < 0)
+                    score = 0;
                 System.out.println("Order EXPIRED: " + order.getName());
             }
         }
@@ -386,7 +595,8 @@ public class GameController {
         boolean matched = false;
 
         // Logic sederhana: Mencocokkan dengan order pertama yang sesuai
-        if (servedDish.getComponents().isEmpty()) return;
+        if (servedDish.getComponents().isEmpty())
+            return;
 
         for (Order order : activeOrders) {
             // TODO: Implementasi deep check ingredients
@@ -397,14 +607,14 @@ public class GameController {
             matched = true;
             activeOrders.remove(order);
             removeOrderView(order);
-            score += 20; // Tambah skor
+            score += 120; // Tambah skor
             System.out.println("Order SUCCESS: " + order.getName());
             break;
         }
 
         if (!matched) {
             System.out.println("Order FAILED: Salah menu!");
-            score -= 10;
+            score -= 50;
         }
     }
 
@@ -438,8 +648,7 @@ public class GameController {
                     resizeView(itemView);
                     stationItemViews.put(pos, itemView);
                     stack.getChildren().add(itemView);
-                }
-                else if (tile.getType() == TileType.WALL) {
+                } else if (tile.getType() == TileType.WALL) {
                     ImageView wallView = new ImageView(AssetManager.getTileImage(TileType.WALL));
                     resizeView(wallView);
                     stack.getChildren().add(wallView);
@@ -450,53 +659,19 @@ public class GameController {
         }
     }
 
-    private void setupChefsViews() {
-        for (Chef chef : chefs) {
-            ImageView chefView = createChefView(chef.getId(), chef.getDirection());
-            chefViews.put(chef, chefView);
-            mapGrid.add(chefView, chef.getX(), chef.getY());
-            if (chef.getIsActive()) {
-                chefView.toFront();
-            }
-        }
-    }
-
-    private ImageView createChefView(String id, Direction dir) {
-        Image chefImage = AssetManager.getChefImage(id, dir);
-        ImageView chefView = new ImageView(chefImage);
-        resizeView(chefView);
-        return chefView;
-    }
-
-    private void resizeView(ImageView view) {
-        view.setFitWidth(AssetManager.TILE_SIZE);
-        view.setFitHeight(AssetManager.TILE_SIZE);
-    }
-
-    private void updateChefPositionInView(Chef chef) {
-        ImageView chefView = chefViews.get(chef);
-        if (chefView != null) {
-            GridPane.setColumnIndex(chefView, chef.getX());
-            GridPane.setRowIndex(chefView, chef.getY());
-        }
-    }
-
-    private void updateChefDirectionView(Chef chef) {
-        ImageView chefView = chefViews.get(chef);
-        if (chefView != null) {
-            chefView.setImage(AssetManager.getChefImage(chef.getId(), chef.getDirection()));
-        }
-    }
+    // Old methods removed to fix duplication
 
     // =========================================================
     // 6. UI ORDER HELPERS
     // =========================================================
 
     private void addOrderView(Order order, org.example.model.recipe.Recipe recipe) {
-        if (ordersContainer == null) return;
+        if (ordersContainer == null)
+            return;
 
         VBox orderBox = new VBox(5);
-        orderBox.setStyle("-fx-background-color: rgba(30, 30, 30, 0.9); -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #ffd700; -fx-border-width: 2;");
+        orderBox.setStyle(
+                "-fx-background-color: rgba(30, 30, 30, 0.9); -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #ffd700; -fx-border-width: 2;");
         orderBox.setPrefWidth(160);
         orderBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -513,18 +688,51 @@ public class GameController {
     }
 
     private void updateOrderView(Order order) {
-        VBox view = orderViews.get(order);
-        if (view == null) return;
+        VBox orderBox = orderViews.get(order);
+        if (orderBox != null) {
+            orderBox.getChildren().clear(); // Reset konten
 
-        if (view.getChildren().size() > 1) {
-            ProgressBar bar = (ProgressBar) view.getChildren().get(1);
-            double progress = order.getRemainingTime() / order.getTime();
-            bar.setProgress(progress);
+            // 1. Progress Bar Timer
+            ProgressBar pb = new ProgressBar(order.getRemainingTime() / Order.ORDER_DURATION);
+            pb.setPrefWidth(60);
 
-            // Ubah warna bar sesuai sisa waktu
-            if (progress < 0.25) bar.setStyle("-fx-accent: red;");
-            else if (progress < 0.5) bar.setStyle("-fx-accent: yellow;");
-            else bar.setStyle("-fx-accent: #00ff00;");
+            // Warna bar: Hijau -> Kuning -> Merah
+            if (order.getRemainingTime() < 5) {
+                pb.setStyle("-fx-accent: red;");
+            } else if (order.getRemainingTime() < 10) {
+                pb.setStyle("-fx-accent: orange;");
+            } else {
+                pb.setStyle("-fx-accent: green;");
+            }
+
+            // 2. Icon Produk Utuh (Pizza)
+            ImageView productIcon = new ImageView(AssetManager.getItemImage(new Pizza(order.getRecipe().getName())));
+            productIcon.setFitWidth(40);
+            productIcon.setFitHeight(40);
+
+            // 3. Nama Resep (Label)
+            Label nameLabel = new Label(order.getRecipe().getName());
+            nameLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: white;");
+
+            // 4. Daftar Bahan (Recipe Ingredients) - NEW FEATURE
+            HBox ingredientsBox = new HBox(2);
+            ingredientsBox.setAlignment(Pos.CENTER);
+            for (String ingredientName : order.getRecipe().getComponents().keySet()) {
+                // Load gambar kecil untuk setiap bahan
+                // Asumsi nama bahan di resep match dengan key di AssetManager (e.g.,
+                // "tomat_chopped")
+                // Kalau di resep "Tomat", kita harus convert ke "tomat" atau "tomat_chopped"
+                // Sederhananya, kita coba load langsung lowercase.
+                ImageView ingImg = new ImageView(AssetManager.getItemImage(new Ingredient(ingredientName)));
+                // Atau lebih aman pakai string key kalau ada mappingnya.
+                // Karena Ingredient constructor perlu nama, kita coba create dummy.
+
+                ingImg.setFitWidth(15);
+                ingImg.setFitHeight(15);
+                ingredientsBox.getChildren().add(ingImg);
+            }
+
+            orderBox.getChildren().addAll(pb, productIcon, nameLabel, ingredientsBox);
         }
     }
 
@@ -540,14 +748,19 @@ public class GameController {
     // =========================================================
 
     public void handlePauseCommand() {
-        if (isFinished) return;
-        if (isPaused) resumeGame();
-        else pauseGame();
+        if (isFinished)
+            return;
+        if (isPaused)
+            resumeGame();
+        else
+            pauseGame();
     }
 
     public void pauseGame() {
-        if (isPaused) return;
+        if (isPaused)
+            return;
         isPaused = true;
+        System.out.println("GAME PAUSED!");
 
         // Load Pause Menu jika belum ada
         if (pauseMenu == null) {
@@ -571,14 +784,16 @@ public class GameController {
     }
 
     public void resumeGame() {
-        if (!isPaused) return;
+        if (!isPaused)
+            return;
         gameRoot.getChildren().remove(pauseMenu);
         isPaused = false;
         // Game Loop handle(now) otomatis jalan lagi karena isPaused false
     }
 
     public void finishStage() {
-        if (isFinished) return;
+        if (isFinished)
+            return;
         isFinished = true;
 
         System.out.println("STAGE OVER! Score: " + score);
@@ -594,7 +809,8 @@ public class GameController {
             }
         }
 
-        if (stageOverController != null) stageOverController.setScore(score);
+        if (stageOverController != null)
+            stageOverController.setScore(score);
 
         if (!gameRoot.getChildren().contains(stageOverMenu)) {
             gameRoot.getChildren().add(stageOverMenu);
@@ -606,12 +822,14 @@ public class GameController {
     }
 
     public void restartGame() {
-        if (stageOverMenu != null) gameRoot.getChildren().remove(stageOverMenu);
+        if (stageOverMenu != null)
+            gameRoot.getChildren().remove(stageOverMenu);
         startGame(currentDifficulty != null ? currentDifficulty : GameDifficulty.EASY);
     }
 
     public void quitToMainMenu() {
-        if (gameLoop != null) gameLoop.stop();
+        if (gameLoop != null)
+            gameLoop.stop();
         Stage stage = (Stage) gameRoot.getScene().getWindow();
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/MainMenuView.fxml"));
@@ -645,7 +863,8 @@ public class GameController {
         Chef activeChef = getActiveChef();
         String timeStr = String.format("%.0f", stageTimeRemaining);
 
-        chefInfoLabel.setText(String.format("Chef: %s (%d/%d)", activeChef.getName(), activeChefIndex + 1, chefs.size()));
+        chefInfoLabel
+                .setText(String.format("Chef: %s (%d/%d)", activeChef.getName(), activeChefIndex + 1, chefs.size()));
 
         StringBuilder posInfo = new StringBuilder();
         posInfo.append("Pos: ").append(activeChef.getPosition())

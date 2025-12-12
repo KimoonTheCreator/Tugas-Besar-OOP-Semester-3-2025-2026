@@ -119,7 +119,8 @@ public class AssetManager {
     }
 
     public static Image getStationImage(Station station) {
-        if (station == null) return null;
+        if (station == null)
+            return null;
 
         if (station instanceof IngredientStorage) {
             IngredientStorage storage = (IngredientStorage) station;
@@ -128,19 +129,27 @@ public class AssetManager {
             return STATION_IMAGES.getOrDefault(key, STATION_IMAGES.get("crate_default"));
         }
 
-        if (station instanceof CuttingStation) return STATIC_IMAGES.get(TileType.CUTTING_STATION);
-        if (station instanceof CookingStation) return STATIC_IMAGES.get(TileType.COOKING_STATION);
-        if (station instanceof AssemblyStation) return STATIC_IMAGES.get(TileType.ASSEMBLY_STATION);
-        if (station instanceof WashingStation) return STATIC_IMAGES.get(TileType.WASHING_STATION);
-        if (station instanceof TrashStation) return STATIC_IMAGES.get(TileType.TRASH_STATION);
-        if (station instanceof PlateStorage) return STATIC_IMAGES.get(TileType.PLATE_STORAGE);
-        if (station instanceof ServingCounter) return STATIC_IMAGES.get(TileType.SERVING_COUNTER);
+        if (station instanceof CuttingStation)
+            return STATIC_IMAGES.get(TileType.CUTTING_STATION);
+        if (station instanceof CookingStation)
+            return STATIC_IMAGES.get(TileType.COOKING_STATION);
+        if (station instanceof AssemblyStation)
+            return STATIC_IMAGES.get(TileType.ASSEMBLY_STATION);
+        if (station instanceof WashingStation)
+            return STATIC_IMAGES.get(TileType.WASHING_STATION);
+        if (station instanceof TrashStation)
+            return STATIC_IMAGES.get(TileType.TRASH_STATION);
+        if (station instanceof PlateStorage)
+            return STATIC_IMAGES.get(TileType.PLATE_STORAGE);
+        if (station instanceof ServingCounter)
+            return STATIC_IMAGES.get(TileType.SERVING_COUNTER);
 
         return STATIC_IMAGES.get(TileType.FLOOR);
     }
 
     public static Image getItemImage(Item item) {
-        if (item == null) return null;
+        if (item == null)
+            return null;
 
         // A. JIKA ITU PIZZA (LOGIC VISUAL PIZZA)
         if (item instanceof Pizza) {
@@ -149,9 +158,12 @@ public class AssetManager {
             // Contoh: pizza_chicken_raw
             String key = "pizza_" + pizza.getType().toLowerCase();
 
-            if (pizza.getState() == IngredientState.RAW) key += "_raw";
-            else if (pizza.getState() == IngredientState.COOKED) key += "_cooked";
-            else if (pizza.getState() == IngredientState.BURNED) key += "_burned";
+            if (pizza.getState() == IngredientState.RAW)
+                key += "_raw";
+            else if (pizza.getState() == IngredientState.COOKED)
+                key += "_cooked";
+            else if (pizza.getState() == IngredientState.BURNED)
+                key += "_burned";
 
             // Return gambar spesifik, kalau ga ada pake gambar plate_full sebagai fallback
             return ITEM_IMAGES.getOrDefault(key, ITEM_IMAGES.get("plate_full"));
@@ -178,9 +190,12 @@ public class AssetManager {
                 return ITEM_IMAGES.get("plate_dirty");
             }
             if (!plate.getContents().isEmpty()) {
-                // Jika piring ada isinya (Pizza Matang)
-                // Idealnya kita return gambar Pizza Matang di atas piring
-                // Tapi untuk simpelnya, return plate_full
+                // Return Image Contentnya Langsung (Pizza Matang)
+                // Kita ambil item pertama dari piring
+                org.example.model.interfaces.Preparable content = plate.getContents().iterator().next();
+                if (content instanceof Item) {
+                    return getItemImage((Item) content);
+                }
                 return ITEM_IMAGES.get("plate_full");
             }
             return ITEM_IMAGES.get("plate_clean");

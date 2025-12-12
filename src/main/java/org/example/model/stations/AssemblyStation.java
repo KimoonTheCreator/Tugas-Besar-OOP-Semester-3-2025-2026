@@ -30,10 +30,14 @@ public class AssemblyStation extends Station {
     // Slot untuk Pizza yang sudah jadi (atau Pizza yang ditaruh kembali)
     private Pizza resultPizza;
 
+    // Slot untuk Piring yang diletakkan di AssemblyStation
+    private Plate storedPlate;
+
     public AssemblyStation(String name, Position position) {
         super(name, position);
         this.ingredientStack = new ArrayList<>();
         this.resultPizza = null;
+        this.storedPlate = null;
     }
 
     // KEY V: INTERACT (Stack / Merge / Ambil / Taruh)
@@ -41,16 +45,19 @@ public class AssemblyStation extends Station {
     public void interact(Chef chef) {
 
         // ============================================================
-        // 1. CHEF BAWA ITEM (LOGIKA MENARUH / STACKING)
+        // 1. CHEF BAWA ITEM
         // ============================================================
         if (chef.isHoldingItem()) {
             Item itemHand = chef.getInventory();
 
-            // KASUS A: CHEF BAWA INGREDIENT (BAHAN)
-            // Syarat: Meja tidak boleh ada Pizza jadi.
+            // KASUS A: CHEF BAWA BAHAN (INGREDIENT)
             if (itemHand instanceof Ingredient) {
-                if (resultPizza == null) {
-                    // Masukkan ke stack (BEBAS RAW/CHOPPED)
+                if (storedPlate != null) {
+                    // Kalau ada piring, masukin bahan ke piring? (Opsional, tapi biasanya plating
+                    // Pizza lgsg jadi)
+                    // Kita assume piring di assembly cuma buat plating pizza jadi.
+                    System.out.println("Ada piring.. logic menumpuk bahan ke piring belum disupport spesifik.");
+                } else if (resultPizza == null) {
                     ingredientStack.add((Ingredient) chef.dropItem());
                     System.out.println("Menumpuk bahan. Total stack: " + ingredientStack.size());
                 } else {
@@ -59,9 +66,57 @@ public class AssemblyStation extends Station {
                 return;
             }
 
-            // KASUS B: CHEF BAWA PIZZA (TARUH BALIK)
-            // Syarat: Meja harus benar-benar kosong (gak ada stack, gak ada pizza lain)
+            // KASUS B: CHEF BAWA PIRING (PLATING / TARUH PIRING)
+            if (itemHand instanceof Plate) {
+                Plate piringTangan = (Plate) itemHand;
+
+                // Scenario B1: Ada Pizza Jadi di Meja -> Pindahkan ke Piring Tangan
+                if (resultPizza != null) {
+                    if (piringTangan.getContents().isEmpty()) {
+                        piringTangan.addContent(resultPizza);
+                        resultPizza = null;
+                        System.out.println("Plating SUKSES! Pizza masuk ke piring.");
+                    }
+                    return;
+                }
+
+                // Scenario B2: Ada Tumpukan Bahan -> Merge jadi Pizza -> Masuk Piring Tangan
+                if (!ingredientStack.isEmpty()) {
+                    Recipe foundRecipe = RecipeManager.getInstance().findMatchingRecipe(ingredientStack);
+                    if (foundRecipe != null) {
+                        Pizza instantPizza = new Pizza(foundRecipe.getName());
+                        piringTangan.addContent(instantPizza);
+                        ingredientStack.clear();
+                        System.out.println("Plating + Merging SUKSES! Instantly served.");
+                    }
+                    return;
+                }
+
+                // Scenario B3: Meja Kosong -> Taruh Piring
+                if (isEmpty() && storedPlate == null) {
+                    this.storedPlate = (Plate) chef.dropItem();
+                    System.out.println("Menaruh Piring di meja.");
+                    return;
+                }
+
+                return;
+            }
+
+            // KASUS C: CHEF BAWA PIZZA (TARUH BALIK / PLATING KE STORED PLATE)
             if (itemHand instanceof Pizza) {
+                Pizza pizzaTangan = (Pizza) itemHand;
+
+                // C1: Ada Piring di meja (StoredPlate) -> Masukkan Pizza ke Piring Meja
+                if (storedPlate != null) {
+                    if (storedPlate.getContents().isEmpty()) {
+                        // FIX: Cast to Preparable or specific type (Pizza is Preparable)
+                        storedPlate.addContent((Preparable) chef.dropItem());
+                        System.out.println("Meletakkan Pizza ke atas Piring di Meja.");
+                    }
+                    return;
+                }
+
+                // C2: Meja Kosong -> Taruh Pizza
                 if (isEmpty()) {
                     this.resultPizza = (Pizza) chef.dropItem();
                     System.out.println("Menaruh Pizza kembali ke meja.");
@@ -70,16 +125,24 @@ public class AssemblyStation extends Station {
                 }
                 return;
             }
-
-            return; // Item lain (piring dll) tidak dihandle disini
+            return;
         }
 
         // ============================================================
-        // 2. CHEF TANGAN KOSONG (LOGIKA AMBIL / MERGE)
+        // 2. CHEF TANGAN KOSONG (AMBIL)
         // ============================================================
         if (!chef.isHoldingItem()) {
 
-            // KASUS C: ADA PIZZA JADI -> AMBIL
+            // Prioritas Ambil:
+            // 1. Piring (StoredPlate) -> dengan atau tanpa isi
+            if (storedPlate != null) {
+                chef.setInventory(storedPlate);
+                storedPlate = null;
+                System.out.println("Mengambil Piring dari meja.");
+                return;
+            }
+
+            // 2. Pizza Jadi
             if (resultPizza != null) {
                 chef.setInventory(resultPizza);
                 resultPizza = null;
@@ -87,24 +150,18 @@ public class AssemblyStation extends Station {
                 return;
             }
 
-            // KASUS D: ADA TUMPUKAN BAHAN -> COBA MERGE
+            // 3. Merge Stack / Undo Stack
             if (!ingredientStack.isEmpty()) {
-
-                // Cek Recipe Manager
                 Recipe foundRecipe = RecipeManager.getInstance().findMatchingRecipe(ingredientStack);
 
                 if (foundRecipe != null) {
-                    // --- SUKSES MERGING ---
-                    // Buat Pizza baru sesuai nama resep
-                    this.resultPizza = new Pizza(foundRecipe.getName());
-                    // Stack dibersihkan karena sudah jadi Pizza
-                    this.ingredientStack.clear();
-
-                    System.out.println("MERGING SUKSES! Jadi " + resultPizza.getName());
+                    // Berhasil Merge -> Jadi Pizza -> Ambil Pizza
+                    Pizza successPizza = new Pizza(foundRecipe.getName());
+                    chef.setInventory(successPizza);
+                    ingredientStack.clear();
+                    System.out.println("MERGING & PICKUP SUKSES! " + successPizza.getName());
                 } else {
-                    // --- GAGAL MERGING ---
-                    // Jika tidak sesuai resep, Chef mengambil bahan paling atas (Undo)
-                    // Ini penting agar pemain bisa memperbaiki kesalahan tumpuk
+                    // Gagal Merge -> Undo (Ambil bahan paling atas)
                     Ingredient top = ingredientStack.remove(ingredientStack.size() - 1);
                     chef.setInventory(top);
                     System.out.println("Resep belum cocok. Mengambil " + top.getName());
@@ -118,8 +175,12 @@ public class AssemblyStation extends Station {
     // ============================================================
     @Override
     public Item getItem() {
+        if (storedPlate != null)
+            return storedPlate; // SHOW PLATE
+
         // Prioritas 1: Tampilkan Pizza (Baik hasil rakitan atau ditaruh balik)
-        if (resultPizza != null) return resultPizza;
+        if (resultPizza != null)
+            return resultPizza;
 
         // Prioritas 2: Tampilkan bahan paling atas tumpukan
         if (!ingredientStack.isEmpty()) {
@@ -131,10 +192,11 @@ public class AssemblyStation extends Station {
 
     @Override
     public boolean isEmpty() {
-        return resultPizza == null && ingredientStack.isEmpty();
+        return resultPizza == null && ingredientStack.isEmpty() && storedPlate == null;
     }
 
-    // Method removeItem default (Hanya dipakai jika logika interact default dipanggil, disini kita custom)
+    // Method removeItem default (Hanya dipakai jika logika interact default
+    // dipanggil, disini kita custom)
     @Override
     public Item removeItem() {
         if (resultPizza != null) {

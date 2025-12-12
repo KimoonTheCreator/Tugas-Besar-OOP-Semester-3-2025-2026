@@ -1,13 +1,12 @@
 package org.example.model.stations;
 
 import org.example.model.entities.Chef;
-import org.example.model.interfaces.Preparable;
 import org.example.model.items.Plate;
 import org.example.model.map.Position;
 
-import java.util.Set;
-
 public class ServingCounter extends Station {
+
+    private Plate servedPlate;
 
     public ServingCounter(String name, Position position) {
         super(name, position);
@@ -17,13 +16,20 @@ public class ServingCounter extends Station {
     public void interact(Chef chef) {
         // Cek apakah Chef membawa item
         if (chef.isHoldingItem()) {
-
             // Cek apakah item tersebut adalah Piring
             if (chef.getInventory() instanceof Plate) {
                 Plate piring = (Plate) chef.getInventory();
 
                 // Cek apakah piring berisi makanan (tidak kosong)
                 if (!piring.getContents().isEmpty()) {
+                    // Logic baru: Simpan piring di ServingCounter
+                    // Agar GameController bisa mengambilnya via getServedPlate()
+                    this.servedPlate = piring;
+
+                    // Hapus dari inventory chef
+                    chef.setInventory(null);
+
+                    // Opsional: Langsung panggil logika process (jika perlu internal logic)
                     processServing(piring);
                 }
             }
@@ -31,13 +37,17 @@ public class ServingCounter extends Station {
     }
 
     private void processServing(Plate piring) {
-        // Ambil isi makanan untuk divalidasi oleh Logic/Controller nanti
-        Set<Preparable> dishServed = piring.getContents();
+        // Logic internal jika diperlukan, misalnya notifikasi visual atau sound
+        System.out.println("Plate placed on Serving Counter!");
+    }
 
-        // Di sini nantinya Controller akan mengambil data 'dishServed'
-        // untuk dicocokkan dengan OrderManager.
+    // --- Added Methods for GameController ---
 
-        // Ubah state piring menjadi kotor dan kosongkan isinya
-        piring.markAsDirty();
+    public Plate getServedPlate() {
+        return servedPlate;
+    }
+
+    public void clearServedPlate() {
+        this.servedPlate = null;
     }
 }

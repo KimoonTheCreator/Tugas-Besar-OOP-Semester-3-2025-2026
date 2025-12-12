@@ -75,25 +75,54 @@ public class Chef extends GameObject {
     // ==========================================
     // 3. GETTERS & SETTERS (Wajib Ada)
     // ==========================================
-    public String getId() { return id; }
-    public String getName() { return name; }
+    public String getId() {
+        return id;
+    }
 
-    public Position getPosition() { return position; }
+    public String getName() {
+        return name;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
 
     // Helper untuk GameController biar gampang akses X/Y
-    public int getX() { return position.getX(); }
-    public int getY() { return position.getY(); }
+    public int getX() {
+        return position.getX();
+    }
 
-    public Direction getDirection() { return direction; }
-    public void setDirection(Direction direction) { this.direction = direction; }
+    public int getY() {
+        return position.getY();
+    }
 
-    public Item getInventory() { return inventory; }
+    public Direction getDirection() {
+        return direction;
+    }
 
-    public ChefState getState() { return state; }
-    public void setState(ChefState state) { this.state = state; }
+    public void setDirection(Direction direction) {
+        this.direction = direction;
+    }
 
-    public boolean getIsActive() { return isActive; }
-    public void setIsActive(boolean isActive) { this.isActive = isActive; }
+    public Item getInventory() {
+        return inventory;
+    }
+
+    public ChefState getState() {
+        return state;
+    }
+
+    public void setState(ChefState state) {
+        this.state = state;
+    }
+
+    public boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
@@ -116,5 +145,9 @@ public class Chef extends GameObject {
     @Override
     public String toString() {
         return "Chef[" + name + " at " + position + "]";
+    }
+
+    public void update(double deltaTime) {
+        // Logic update per frame jika diperlukan (misal: animasi)
     }
 }
