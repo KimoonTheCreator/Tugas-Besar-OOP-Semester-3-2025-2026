@@ -87,7 +87,9 @@ public class RecipeManager {
 
     public Recipe findMatchingRecipe(Dish dish) {
         for (Recipe r : recipes) {
-            if (r.getName().matches(dish.getName()))
+            // Recipe name typically "Uncooked [DishName]"
+            // Dish name is "[DishName]"
+            if (r.getName().contains(dish.getName()))
                 return r;
         }
         return null;

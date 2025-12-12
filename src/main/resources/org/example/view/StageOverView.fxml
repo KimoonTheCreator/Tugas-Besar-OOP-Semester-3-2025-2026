@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="stageOverRoot" 
+            xmlns="http://javafx.com/javafx/21" 
+            xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="org.example.controller.StageOverController"
+            style="-fx-background-color: rgba(50, 0, 0, 0.9);" 
+            prefHeight="600.0" prefWidth="700.0">
+
+    <!-- Background Image (Optional, reused from menu_popup if desired, or just color) -->
+    <ImageView fx:id="backgroundView" 
+               fitHeight="600.0" 
+               fitWidth="700.0" 
+               AnchorPane.topAnchor="0.0" 
+               AnchorPane.rightAnchor="0.0" 
+               AnchorPane.bottomAnchor="0.0" 
+               AnchorPane.leftAnchor="0.0"
+               opacity="0.5"/>
+
+    <VBox alignment="CENTER" spacing="20.0" 
+          AnchorPane.topAnchor="100.0" 
+          AnchorPane.bottomAnchor="100.0" 
+          AnchorPane.leftAnchor="150.0"
+          AnchorPane.rightAnchor="150.0">
+
+        <Label fx:id="titleLabel" text="STAGE OVER" textFill="WHITE">
+            <font>
+                <Font name="System Bold" size="48.0" />
+            </font>
+        </Label>
+
+        <Label fx:id="scoreLabel" text="Final Score: 0" textFill="#ffcc00">
+             <font>
+                <Font name="System Bold" size="32.0" />
+            </font>
+        </Label>
+        
+        <!-- Spacer -->
+        <VBox prefHeight="30.0" />
+
+        <!-- Buttons -->
+        <!-- Restart Button -->
+        <ImageView fx:id="restartButtonView"
+                   pickOnBounds="true"
+                   preserveRatio="true"
+                   fitWidth="200.0"
+                   onMouseClicked="#handleRestart"
+                   style="-fx-cursor: hand;"/>
+        
+        <Label text="PLAY AGAIN" textFill="WHITE">
+            <font><Font size="16.0"/></font>
+        </Label>
+
+        <!-- Main Menu Button -->
+        <ImageView fx:id="mainMenuButtonView"
+                   pickOnBounds="true"
+                   preserveRatio="true"
+                   fitWidth="200.0"
+                   onMouseClicked="#handleMainMenu"
+                   style="-fx-cursor: hand;"/>
+                   
+        <Label text="MAIN MENU" textFill="WHITE">
+             <font><Font size="16.0"/></font>
+        </Label>
+
+    </VBox>
+</AnchorPane>

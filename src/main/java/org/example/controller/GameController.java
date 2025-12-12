@@ -5,6 +5,12 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.paint.Color;
+import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 import javafx.stage.Stage;
 import javafx.animation.AnimationTimer;
 
@@ -41,6 +47,9 @@ public class GameController {
     private GridPane mapGrid;
 
     @FXML
+    private VBox ordersContainer;
+
+    @FXML
     private Label chefInfoLabel;
 
     @FXML
@@ -56,12 +65,18 @@ public class GameController {
     private Parent pauseMenu;
     private PauseMenuController pauseMenuController;
 
+    private boolean isFinished = false;
+    private Parent stageOverMenu;
+    private StageOverController stageOverController;
+    private int score = 0;
+
     private final Map gameMap;
     private final List<Chef> chefs;
     private int activeChefIndex = 0;
 
     // Menggunakan java.util.Map secara eksplisit
     private final java.util.Map<Chef, ImageView> chefViews = new HashMap<>();
+    private final java.util.Map<Order, VBox> orderViews = new HashMap<>();
 
     public GameController() {
         // Inisialisasi Model
@@ -105,6 +120,18 @@ public class GameController {
     public void startGame(GameDifficulty difficulty) {
         this.currentDifficulty = difficulty;
         this.stageTimeRemaining = difficulty.getDurationInSeconds();
+        this.score = 0;
+        this.isFinished = false;
+
+        // Reset State
+        this.activeOrders.clear();
+        this.orderViews.clear();
+        if (ordersContainer != null)
+            ordersContainer.getChildren().clear();
+
+        this.timeSinceLastOrder = ORDER_SPAWN_INTERVAL; // Force spawn soon
+        // Optional: Reset Chefs/Map if possible, for now just Timer/Score/Orders
+
         System.out.println("Starting Game with Difficulty: " + difficulty + " (" + stageTimeRemaining + "s)");
         startGameLoop();
     }
@@ -194,9 +221,7 @@ public class GameController {
         stageTimeRemaining -= deltaTime;
         if (stageTimeRemaining <= 0) {
             stageTimeRemaining = 0;
-            // TODO: Trigger Game Over Event
-            System.out.println("GAME OVER - Time's Up!");
-            pauseGame();
+            finishStage();
         }
 
         // 2. Update Orders
@@ -221,13 +246,22 @@ public class GameController {
         List<Order> expiredOrders = new ArrayList<>();
         for (Order order : activeOrders) {
             order.update(deltaTime);
+            updateOrderView(order);
+
             if (order.isExpired()) {
                 expiredOrders.add(order);
                 System.out.println("Order EXPIRED: " + order.getName());
-                // TODO: Apply Penalty
+                score += order.getPenalty();
+                if (score < 0)
+                    score = 0;
             }
         }
         activeOrders.removeAll(expiredOrders);
+
+        // Remove views for expired orders
+        for (Order expired : expiredOrders) {
+            removeOrderView(expired);
+        }
     }
 
     private void spawnNewOrder() {
@@ -240,6 +274,7 @@ public class GameController {
             Dish dish = new Dish(targetName);
             Order newOrder = new Order(dish, 60); // 60 seconds duration
             activeOrders.add(newOrder);
+            addOrderView(newOrder, recipe);
             System.out.println("New Order Spawned: " + newOrder.getName());
         }
     }
@@ -276,7 +311,7 @@ public class GameController {
         }
 
         positionInfoLabel.setText(posInfo.toString());
-        // TODO: Implementasi logika update score
+        scoreLabel.setText("Score: " + score);
     }
 
     // -----------------------------------------------------------
@@ -311,6 +346,8 @@ public class GameController {
     }
 
     public void handlePauseCommand() {
+        if (isFinished)
+            return;
         if (isPaused) {
             resumeGame();
         } else {
@@ -319,8 +356,8 @@ public class GameController {
     }
 
     public void pauseGame() {
-        if (isPaused)
-            return; // Sudah pause
+        if (isPaused || isFinished)
+            return; // Sudah pause atau selesai
 
         isPaused = true;
         // Hentikan game loop (contoh: animator.stop())
@@ -375,10 +412,82 @@ public class GameController {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/MainMenuView.fxml"));
             stage.getScene().setRoot(fxmlLoader.load());
 
+            // Resize back to original dimensions
+            stage.setWidth(700 + 16); // +16 for window borders approx
+            stage.setHeight(600 + 39); // +39 for title bar approx
+            // Or simpler: use Scene size if possible, but stage includes decorations.
+            // Better to force scene resize if stage.sizeToScene() works, but explicit W/H
+            // is safer for now.
+
+            // Re-centering is tricky without knowing screen bounds,
+            // generally just resizing is enough as it keeps top-left pos.
+            // But let's set the Scene size first.
+            stage.getScene().getWindow().setWidth(700);
+            stage.getScene().getWindow().setHeight(630); // 600 + decoration
+            stage.centerOnScreen();
+
             isPaused = false;
+            isFinished = false;
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void finishStage() {
+        if (isFinished)
+            return;
+        isFinished = true;
+
+        // Stop Loop
+        if (gameLoop != null)
+            gameLoop.stop();
+
+        System.out.println("STAGE OVER! Final Score: " + score);
+
+        // Load View if needed
+        if (stageOverMenu == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/view/StageOverView.fxml"));
+                stageOverMenu = loader.load();
+                stageOverController = loader.getController();
+                stageOverController.setGameController(this);
+            } catch (IOException e) {
+                System.err.println("Failed to load StageOverView.fxml");
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        // Update Score
+        if (stageOverController != null) {
+            stageOverController.setScore(score);
+        }
+
+        // Show View
+        if (!gameRoot.getChildren().contains(stageOverMenu)) {
+            gameRoot.getChildren().add(stageOverMenu);
+        }
+
+        AnchorPane.setTopAnchor(stageOverMenu, 0.0);
+        AnchorPane.setBottomAnchor(stageOverMenu, 0.0);
+        AnchorPane.setLeftAnchor(stageOverMenu, 0.0);
+        AnchorPane.setRightAnchor(stageOverMenu, 0.0);
+    }
+
+    public void restartGame() {
+        // Hide Stage Over UI
+        if (stageOverMenu != null) {
+            gameRoot.getChildren().remove(stageOverMenu);
+        }
+
+        System.out.println("Restarting Game...");
+        // Re-start with same difficulty
+        if (currentDifficulty != null) {
+            startGame(currentDifficulty);
+        } else {
+            // Fallback
+            startGame(GameDifficulty.EASY);
         }
     }
 
@@ -473,7 +582,6 @@ public class GameController {
                 int newX = activeChef.getX() + dir.getDx();
                 int newY = activeChef.getY() + dir.getDy();
 
-                // Cek collision per step
                 if (gameMap.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
                     activeChef.move(dir);
                     updateChefPositionInView(activeChef);
@@ -504,9 +612,12 @@ public class GameController {
             // Basic Check (For now accepting if ingredients exist, matching First Order)
             // Ideally compare Ingredients or Name
             if (!matched) {
+                // Check match name? Or ingredients?
+                // For now, assume simple logic
                 matched = true;
                 activeOrders.remove(order);
-                // TODO: Add Score
+                removeOrderView(order);
+                score += 20; // Example score increment
                 System.out.println("Order SUCCESS: " + order.getName());
                 break;
             }
@@ -517,4 +628,83 @@ public class GameController {
             // TODO: Apply Penalty
         }
     }
+
+    // -----------------------------------------------------------
+    // ORDER VIEW HELPERS
+    // -----------------------------------------------------------
+
+    private void addOrderView(Order order, org.example.model.recipe.Recipe recipe) {
+        if (ordersContainer == null)
+            return;
+
+        VBox orderBox = new VBox(5);
+        // Darker theme, better border, shadow effect simulated by color
+        orderBox.setStyle(
+                "-fx-background-color: rgba(30, 30, 30, 0.9); -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #ffd700; -fx-border-radius: 10; -fx-border-width: 2;");
+        orderBox.setPrefWidth(160); // Widen for full text
+        orderBox.setAlignment(Pos.CENTER_LEFT);
+
+        // 1. Order Name
+        Label nameLabel = new Label(order.getName());
+        nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-text-fill: #ffd700; -fx-font-weight: bold; -fx-font-size: 16px;"); // Larger header
+        orderBox.getChildren().add(nameLabel);
+
+        // 2. Ingredients List
+        if (recipe != null) {
+            List<String> ingNames = new ArrayList<>();
+            for (String key : recipe.getComponents().keySet()) {
+                ingNames.add(key);
+            }
+            String ingText = "(" + String.join(", ", ingNames) + ")";
+
+            Label ingLabel = new Label(ingText);
+            ingLabel.setWrapText(true);
+            ingLabel.setStyle("-fx-text-fill: white; -fx-font-size: 11px; -fx-font-style: italic;");
+            orderBox.getChildren().add(ingLabel);
+        }
+
+        // 3. Timer Bar
+        ProgressBar timerBar = new ProgressBar(1.0);
+        timerBar.setPrefWidth(140); // Match box width
+        timerBar.setPrefHeight(15); // Taller bar
+        timerBar.setStyle(
+                "-fx-accent: #00ff00; -fx-control-inner-background: #555555; -fx-text-box-border: transparent;");
+
+        orderBox.getChildren().add(timerBar);
+
+        ordersContainer.getChildren().add(orderBox);
+        orderViews.put(order, orderBox);
+    }
+
+    private void updateOrderView(Order order) {
+        VBox view = orderViews.get(order);
+        if (view == null)
+            return;
+
+        // Update Timer Bar
+        // Index 0: Title, Index 1: Ingredients, Index 2: ProgressBar
+        if (view.getChildren().size() > 2) {
+            ProgressBar bar = (ProgressBar) view.getChildren().get(2);
+            double progress = order.getRemainingTime() / order.getTime();
+            bar.setProgress(progress);
+
+            // Color Change based on urgency
+            if (progress < 0.25) {
+                bar.setStyle("-fx-accent: red;");
+            } else if (progress < 0.5) {
+                bar.setStyle("-fx-accent: yellow;");
+            } else {
+                bar.setStyle("-fx-accent: green;");
+            }
+        }
+    }
+
+    private void removeOrderView(Order order) {
+        VBox view = orderViews.remove(order);
+        if (view != null && ordersContainer != null) {
+            ordersContainer.getChildren().remove(view);
+        }
+    }
+
 }

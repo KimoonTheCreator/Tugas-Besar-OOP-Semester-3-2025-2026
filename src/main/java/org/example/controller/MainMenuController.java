@@ -140,7 +140,7 @@ public class MainMenuController {
 
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/view/GameView.fxml"));
             Parent gameRootNode = fxmlLoader.load();
-            Scene gameScene = new Scene(gameRootNode, 700, 600);
+            Scene gameScene = new Scene(gameRootNode, 900, 600);
 
             GameController gameController = fxmlLoader.getController();
 
@@ -193,6 +193,12 @@ public class MainMenuController {
 
             // 3. Ganti Scene
             stage.setScene(gameScene);
+
+            // Explicitly resize stage to match new scene requirements
+            stage.setWidth(900 + 16);
+            stage.setHeight(600 + 39);
+            stage.centerOnScreen();
+
             stage.show();
             System.out.println("DEBUG: Scene telah beralih ke Game View.");
 
