@@ -15,10 +15,10 @@
 
     <ImageView fx:id="backgroundView" fitHeight="600.0" fitWidth="700.0" />
 
-    <ImageView fx:id="titleView" layoutX="100.0" layoutY="50.0" fitWidth="500.0" preserveRatio="true"/>
+    <ImageView fx:id="titleView" layoutX="0" layoutY="75.0" fitWidth="700.0" preserveRatio="true"/>
 
     <VBox alignment="CENTER" spacing="20.0" 
-          AnchorPane.topAnchor="200.0" 
+          AnchorPane.topAnchor="250.0" 
           AnchorPane.bottomAnchor="100.0" 
           AnchorPane.leftAnchor="250.0"
           AnchorPane.rightAnchor="250.0">
