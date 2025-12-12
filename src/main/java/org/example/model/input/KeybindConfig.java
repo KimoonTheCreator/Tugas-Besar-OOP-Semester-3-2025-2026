@@ -27,8 +27,8 @@ public class KeybindConfig {
         keyBindings.put(Key.S, Command.MOVE_DOWN);
         keyBindings.put(Key.A, Command.MOVE_LEFT);
         keyBindings.put(Key.D, Command.MOVE_RIGHT);
-        keyBindings.put(Key.E, Command.INTERACT);
-        keyBindings.put(Key.V, Command.PICKUP_DROP);
+        keyBindings.put(Key.V, Command.INTERACT);
+        keyBindings.put(Key.F, Command.PICKUP_DROP);
         keyBindings.put(Key.P, Command.PAUSE);
         keyBindings.put(Key.TAB, Command.SWITCH_CHEF);
     }

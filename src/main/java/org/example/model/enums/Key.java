@@ -8,8 +8,8 @@ public enum Key {
     A, // Gerak kiri
     S, // Gerak bawah
     D, // Gerak kanan
-    E, // Interaksi
-    V, // Ambil/Taruh item
+    F, // Pick/drop
+    V, // Interact item
     P, // Pause
     TAB // Ganti chef
 }

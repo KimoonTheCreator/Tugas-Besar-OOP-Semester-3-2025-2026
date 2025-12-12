@@ -1,62 +1,40 @@
 package org.example.model.map;
 
-/**
- * Kelas Position untuk menyimpan koordinat (x, y) dalam game
- */
+import java.util.Objects;
+
 public class Position {
     private int x;
     private int y;
 
-    // Constructor
     public Position(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    // Getter dan Setter
-    public int getX() {
-        return x;
+    public int getX() { return x; }
+    public int getY() { return y; }
+
+    // Method helper untuk mendapatkan koordinat depan hadapan
+    public Position getFacingPosition(Direction dir) {
+        return new Position(x + dir.getDx(), y + dir.getDy());
     }
 
-    public int getY() {
-        return y;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    // Method untuk menggeser posisi
-    public void translate(int dx, int dy) {
-        this.x += dx;
-        this.y += dy;
+    // --- WAJIB DITAMBAHKAN AGAR HASHMAP BERJALAN ---
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Position position = (Position) o;
+        return x == position.x && y == position.y;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null || getClass() != obj.getClass())
-            return false;
-        Position other = (Position) obj;
-        return x == other.x && y == other.y;
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 
     @Override
     public String toString() {
-        return "(" + x + ", " + y + ")";
-    }
-
-    public Position getFacingPosition(Direction dir) {
-        // Menggunakan dx dan dy dari objek Direction untuk menghitung posisi baru
-        int facingX = this.x + dir.getDx();
-        int facingY = this.y + dir.getDy();
-        
-        // Mengembalikan objek Position baru
-        return new Position(facingX, facingY);
+        return "(" + x + "," + y + ")";
     }
 }
