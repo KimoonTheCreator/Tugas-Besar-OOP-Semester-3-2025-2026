@@ -1,16 +1,26 @@
 package org.example.model.order;
+
 import org.example.model.items.Dish;
 
 public class Order {
     private Dish dish;
     private int reward = 120;
     private int penalty = -50;
+    private double remainingTime;
     private int time;
-    // private int id;
 
-    public Order(Dish dish, int time){
+    public Order(Dish dish, int time) {
         this.dish = dish;
         this.time = time;
+        this.remainingTime = time;
+    }
+
+    public void update(double deltaTime) {
+        remainingTime -= deltaTime;
+    }
+
+    public boolean isExpired() {
+        return remainingTime <= 0;
     }
 
     public String getName() {
@@ -29,11 +39,11 @@ public class Order {
         return time;
     }
 
-    // public int getId() {
-    //     return id;
-    // }
+    public double getRemainingTime() {
+        return remainingTime;
+    }
 
-    // public void setId(int id) {
-    //     this.id = id;
-    // }
+    public Dish getDish() {
+        return dish;
+    }
 }

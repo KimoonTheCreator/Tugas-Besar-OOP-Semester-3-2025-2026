@@ -6,8 +6,8 @@ import org.example.model.map.Position;
 
 public class PlateStorage extends Station {
 
-    public PlateStorage(String name, Position position) {
-        super(name, position);
+    public PlateStorage(Position position) {
+        super("Plate Storage", position);
     }
 
     @Override
@@ -36,7 +36,9 @@ public class PlateStorage extends Station {
         }
 
         // SKENARIO 3: Plating di atas tumpukan piring (Opsional)
-        // Beberapa game membolehkan menaruh makanan langsung ke tumpukan piring di storage
-        // Jika ingin fitur ini, Anda bisa tambahkan logika mirip AssemblyStation di sini.
+        // Beberapa game membolehkan menaruh makanan langsung ke tumpukan piring di
+        // storage
+        // Jika ingin fitur ini, Anda bisa tambahkan logika mirip AssemblyStation di
+        // sini.
     }
 }

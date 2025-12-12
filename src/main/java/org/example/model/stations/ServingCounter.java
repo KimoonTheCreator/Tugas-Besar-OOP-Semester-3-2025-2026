@@ -9,35 +9,35 @@ import java.util.Set;
 
 public class ServingCounter extends Station {
 
-    public ServingCounter(String name, Position position) {
-        super(name, position);
+    private Plate servedPlate;
+
+    public ServingCounter(Position position) {
+        super("Serving Counter", position);
+        this.servedPlate = null;
     }
 
     @Override
     public void interact(Chef chef) {
         // Cek apakah Chef membawa item
         if (chef.isHoldingItem()) {
-
-            // Cek apakah item tersebut adalah Piring
             if (chef.getInventory() instanceof Plate) {
                 Plate piring = (Plate) chef.getInventory();
 
-                // Cek apakah piring berisi makanan (tidak kosong)
+                // Cek apakah piring berisi makanan
                 if (!piring.getContents().isEmpty()) {
-                    processServing(piring);
+                    chef.dropItem(); // Chef drops it
+                    this.servedPlate = piring; // Store for validation
+                    // piring.markAsDirty(); // Controller will handle logic after validation
                 }
             }
         }
     }
 
-    private void processServing(Plate piring) {
-        // Ambil isi makanan untuk divalidasi oleh Logic/Controller nanti
-        Set<Preparable> dishServed = piring.getContents();
+    public Plate getServedPlate() {
+        return servedPlate;
+    }
 
-        // Di sini nantinya Controller akan mengambil data 'dishServed'
-        // untuk dicocokkan dengan OrderManager.
-
-        // Ubah state piring menjadi kotor dan kosongkan isinya
-        piring.markAsDirty();
+    public void clearServedPlate() {
+        this.servedPlate = null;
     }
 }

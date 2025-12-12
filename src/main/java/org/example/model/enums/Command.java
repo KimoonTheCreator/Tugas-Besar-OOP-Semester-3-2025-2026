@@ -11,6 +11,7 @@ public enum Command {
     INTERACT,
     PICKUP_DROP,
     SWITCH_CHEF,
+    DASH,
     PAUSE,
     NONE
 }

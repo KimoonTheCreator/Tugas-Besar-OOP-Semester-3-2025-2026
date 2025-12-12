@@ -8,55 +8,52 @@ import org.example.model.map.Position;
 
 public class CookingStation extends Station {
 
-    public CookingStation(String name, Position position) {
-        super(name, position);
+    public CookingStation(Position position) {
+        super("Cooking Station", position);
     }
 
     @Override
     public void interact(Chef chef) {
+        // Drop logic:
+        // 1. If holding Cooking Device (Pan/Pot) and Station Empty -> Place Device.
+        // 2. If holding Ingredient and Station has Device -> Put Ingredient into
+        // Device.
+        // 3. If Empty Hand and Station has Device -> Pick up Device.
+
         Item chefItem = chef.getInventory();
         Item stationItem = this.getItem();
 
-        // KASUS 1: MENARUH ALAT MASAK (Chef bawa Panci/Wajan, Meja Kosong)
+        // 1. Place Device
         if (chefItem instanceof CookingDevice && this.isEmpty()) {
             this.addItem(chef.dropItem());
         }
-
-        // KASUS 2: MENGAMBIL ALAT MASAK (Chef Kosong, Meja ada Panci/Wajan)
-        else if (!chef.isHoldingItem() && !this.isEmpty()) {
-            // Validasi Khusus: OVEN tidak boleh diambil (Non-Portable)
-            if (stationItem instanceof CookingDevice) {
-                if (!((CookingDevice) stationItem).isPortable()) {
-                    return;
-                }
-            }
-            chef.setInventory(this.takeItem());
-        }
-
-        // KASUS 3: MEMASUKKAN BAHAN KE ALAT MASAK (Chef bawa Bahan, Meja ada Panci)
-        // Chef tidak perlu ambil panci dulu, bisa langsung cemplungin bahan.
+        // 2. Put Ingredient (Preparable)
         else if (chefItem instanceof Preparable && stationItem instanceof CookingDevice) {
             CookingDevice device = (CookingDevice) stationItem;
             Preparable bahan = (Preparable) chefItem;
 
-            // Cek apakah alat masak mau menerima bahan ini? (Validasi Resep)
             if (device.canAccept(bahan)) {
-                device.addIngredient(bahan); // Masukkan bahan
-                chef.dropItem();             // Hilangkan dari tangan Chef
-            } else {
+                device.addIngredient(bahan);
+                chef.dropItem();
             }
+        }
+        // 3. Pick up Device
+        else if (!chef.isHoldingItem() && !this.isEmpty()) {
+            // Check portable
+            if (stationItem instanceof CookingDevice) {
+                if (!((CookingDevice) stationItem).isPortable()) {
+                    return; // Cannot pick up Oven
+                }
+            }
+            chef.pickUpItem(this.takeItem());
         }
     }
 
-    // --- LOGIKA MEMASAK (PENTING) ---
-    // Method ini HARUS dipanggil oleh GameLoop/Controller setiap detik/tick.
-    // Inilah yang membuat "Kompor Menyala".
-    public void update() {
+    @Override
+    public void update(double deltaTime) {
         if (!this.isEmpty() && this.getItem() instanceof CookingDevice) {
             CookingDevice device = (CookingDevice) this.getItem();
-
-            // Perintah alat masak untuk memproses bahan di dalamnya
-            device.startCooking();
+            device.update(deltaTime);
         }
     }
 }

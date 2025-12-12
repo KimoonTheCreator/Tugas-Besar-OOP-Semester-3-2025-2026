@@ -24,36 +24,28 @@ public class Oven extends KitchenUtensils implements CookingDevice {
 
     @Override
     public boolean canAccept(Preparable item) {
-
-        // Kita cek dari namanya (Simple Logic)
-        if (item instanceof Item) {
-            String name = ((Item) item).getName();
-            // Terima jika namanya mengandung "Pizza"
-            // Dan pastikan belum gosong
-            return name.contains("Pizza");
+        if (item instanceof Dish) {
+            String name = ((Dish) item).getName();
+            return name.contains("Pizza") || name.contains("Uncooked");
         }
-        return false;
+        // Allow raw ingredients if needed, usage specific. For now focusing on Dish.
+        return item instanceof Ingredient;
     }
 
     @Override
-    public void addIngredient(Preparable ingredient) {
-        if (canAccept(ingredient) && this.contents.size() < capacity()) {
-            super.addItem(ingredient);
-            System.out.println(ingredient + " dimasukkan ke dalam Oven.");
+    public void addIngredient(Preparable item) {
+        if (canAccept(item) && this.contents.size() < capacity()) {
+            super.addItem(item);
+            System.out.println(((Item) item).getName() + " dimasukkan ke dalam Oven.");
         } else {
             System.out.println("Oven menolak! (Mungkin penuh atau bukan Pizza)");
         }
     }
 
     @Override
-    public void startCooking() {
-        // Oven memanaskan Pizza di dalamnya
+    public void update(double deltaTime) {
         for (Preparable item : this.contents) {
-            // Panggil logika "Pintar" yang sudah kita buat di Ingredient
-            // Asumsi: Oven cukup cepat, kita beri waktu 1.0 detik per tick
-            item.cook();
-            // ATAU jika Pizza menggunakan sistem durasi seperti Ingredient:
-            // ((Ingredient) item).addCookingDuration(1.0);
+            item.addCookingDuration(deltaTime);
         }
     }
 }

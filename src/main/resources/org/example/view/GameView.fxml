@@ -62,7 +62,7 @@
                     </Label>
                 </HBox>
 
-                <Label text="WASD=Move | TAB=Switch | E=Interact | V=Pickup | ESC=Exit" 
+                <Label text="WASD=Move | TAB=Switch | V=Interact | F=Pickup | ESC=Exit" 
                         style="-fx-text-fill: #999999;">
                     <font>
                         <Font name="Consolas" size="11.0" />

@@ -4,7 +4,7 @@ import org.example.model.enums.ChefState;
 import org.example.model.items.Item;
 import org.example.model.map.Direction;
 import org.example.model.map.Position;
-import org.example.model.map.Map;
+
 import org.example.model.stations.Station;
 
 /**
@@ -18,6 +18,10 @@ public class Chef extends GameObject {
     private Item inventory;
     private ChefState state;
     private Boolean isActive;
+
+    // Dash properties
+    private long lastDashTime = 0;
+    private static final long DASH_COOLDOWN = 1000; // 1 second cooldown
 
     // Constructor
     public Chef(String id, String name, Position position) {
@@ -169,6 +173,20 @@ public class Chef extends GameObject {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    // Dash methods
+    public boolean canDash() {
+        return System.currentTimeMillis() - lastDashTime >= DASH_COOLDOWN;
+    }
+
+    public void startDash() {
+        this.lastDashTime = System.currentTimeMillis();
+    }
+
+    public long getDashCooldownRemaining() {
+        long diff = System.currentTimeMillis() - lastDashTime;
+        return diff >= DASH_COOLDOWN ? 0 : DASH_COOLDOWN - diff;
     }
 
     @Override

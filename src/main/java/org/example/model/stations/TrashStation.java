@@ -7,8 +7,8 @@ import org.example.model.map.Position;
 
 public class TrashStation extends Station {
 
-    public TrashStation(String name, Position position) {
-        super(name, position);
+    public TrashStation(Position position) {
+        super("Trash Station", position);
     }
 
     @Override
