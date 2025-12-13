@@ -9,22 +9,22 @@ public class WashingStation extends Station {
 
     private Chef washerChef;
     private double washTimer = 0;
-    private static final double REQUIRED_TIME = 3.0; // SPEK: 3 Detik
+    private static final double REQUIRED_TIME = 3.0; // 3 detik
 
     public WashingStation(String name, Position position) {
         super(name, position);
     }
 
-    // KEY V: TARUH / AMBIL
+    // Key F: taruh/ambil
     @Override
     public void interact(Chef chef) {
         if (washerChef != null) {
-            cancelWashing(); // Batal kalau diganggu
+            cancelWashing();
             return;
         }
 
-        // 1. Jika Station KOSONG: Cuma terima Piring Kotor
         if (this.isEmpty()) {
+            // Terima piring kotor saja
             if (chef.isHoldingItem() && chef.getInventory() instanceof Plate) {
                 Plate p = (Plate) chef.getInventory();
                 if (!p.isClean()) {
@@ -32,26 +32,22 @@ public class WashingStation extends Station {
                 } else {
                     System.out.println("Hanya piring kotor yang bisa dicuci!");
                 }
-            } else if (chef.isHoldingItem()) {
-                System.out.println("Washing Station hanya menerima Piring Kotor!");
             }
-        } 
-        // 2. Jika Station ADA ITEM (Pasti Piring Kotor/Bersih): Ambil
-        else if (!this.isEmpty() && !chef.isHoldingItem()) {
+        } else if (!chef.isHoldingItem()) {
             chef.setInventory(this.removeItem());
-            cancelWashing(); // Reset state jika diambil pas lagi dicuci
+            cancelWashing();
         }
     }
 
-    // KEY C: MENCUCI (TRIGGER)
+    // Key V: mulai cuci
     public void action(Chef chef) {
         if (!isEmpty() && getItem() instanceof Plate) {
             Plate p = (Plate) getItem();
             if (!p.isClean()) {
                 if (washerChef == null) {
                     this.washerChef = chef;
-                    chef.setState(ChefState.INTERACT); // Chef Busy
-                    System.out.println("Mulai mencuci (3 detik)...");
+                    chef.setState(ChefState.INTERACT);
+                    System.out.println("Mencuci...");
                 } else if (washerChef == chef) {
                     cancelWashing();
                 }
@@ -65,8 +61,8 @@ public class WashingStation extends Station {
 
             if (washTimer >= REQUIRED_TIME) {
                 Plate p = (Plate) getItem();
-                p.wash(); // Jadi Bersih
-                System.out.println("Piring BERSIH!");
+                p.wash();
+                System.out.println("Piring bersih!");
                 cancelWashing();
             }
         }
@@ -76,7 +72,7 @@ public class WashingStation extends Station {
         if (washerChef != null) {
             washerChef.setState(ChefState.IDLE);
             washerChef = null;
-            washTimer = 0; // Reset timer cuci (biasanya cuci ulang dari awal)
+            washTimer = 0;
         }
     }
 }

@@ -8,70 +8,47 @@ public class Pizza extends Item implements Preparable {
     private IngredientState state;
     private String type; // Contoh: "Cheese", "Pepperoni"
 
-    // Timer Masak
+    // Timer masak
     private double cookingDuration;
 
-    // Konstanta Waktu (Dalam detik)
-    private final double TIME_TO_COOK = 12.0; // 12 Detik -> Matang
-    private final double TIME_TO_BURN = 24.0; // 24 Detik -> Gosong
+    private final double TIME_TO_COOK = 12.0;  // Matang setelah 12 detik
+    private final double TIME_TO_BURN = 24.0;  // Gosong setelah 24 detik
 
     public Pizza(String type) {
-        // Nama item gabungan, misal: "Pizza Cheese"
         super("Pizza " + type);
         this.type = type;
-        this.state = IngredientState.RAW; // Default: Mentah
+        this.state = IngredientState.RAW;
         this.cookingDuration = 0;
     }
 
-    // ==========================================
-    // CORE LOGIC: TIMER MEMASAK
-    // ==========================================
-
-    /**
-     * Method ini WAJIB dipanggil oleh CookingStation di dalam method
-     * update(deltaTime).
-     * 
-     * @param deltaTime Waktu yang berlalu sejak frame terakhir (detik).
-     */
+    // Timer update - dipanggil setiap frame oleh CookingStation
     public void addCookingDuration(double deltaTime) {
-        // 1. Jika sudah gosong, stop proses masak.
-        if (this.state == IngredientState.BURNED) {
-            return;
-        }
+        if (this.state == IngredientState.BURNED) return;
 
-        // 2. Tambahkan durasi
         this.cookingDuration += deltaTime;
 
-        // 3. Cek Transisi Status
-
-        // Transisi: RAW -> COOKED
+        // Cek transisi status: RAW -> COOKED -> BURNED
         if (this.state == IngredientState.RAW && this.cookingDuration >= TIME_TO_COOK) {
-            cook(); // Panggil fungsi cook()
-        }
-        // Transisi: COOKED -> BURNED
-        else if (this.state == IngredientState.COOKED && this.cookingDuration >= TIME_TO_BURN) {
-            burn(); // Panggil fungsi burn()
+            cook();
+        } else if (this.state == IngredientState.COOKED && this.cookingDuration >= TIME_TO_BURN) {
+            burn();
         }
     }
 
-    // ==========================================
-    // IMPLEMENTASI METHOD PREPARABLE
-    // ==========================================
+    // Preparable implementation
 
     @Override
     public void cook() {
-        // Ubah state hanya jika belum matang dan belum gosong
         if (this.state == IngredientState.RAW) {
             this.state = IngredientState.COOKED;
-            System.out.println("TING! " + getName() + " sudah MATANG!");
+            System.out.println(getName() + " sudah MATANG!");
         }
     }
 
     public void burn() {
-        // Ubah state jadi gosong
         if (this.state != IngredientState.BURNED) {
             this.state = IngredientState.BURNED;
-            System.out.println("WADUH! " + getName() + " GOSONG!");
+            System.out.println(getName() + " GOSONG!");
         }
     }
 
@@ -85,9 +62,7 @@ public class Pizza extends Item implements Preparable {
         // Tidak ada logic potong
     }
 
-    // ==========================================
-    // METHOD VALIDASI (PREPARABLE)
-    // ==========================================
+    // Validasi status
 
     @Override
     public boolean canBeChopped() {
@@ -100,14 +75,11 @@ public class Pizza extends Item implements Preparable {
         return this.state != IngredientState.BURNED;
     }
 
-    @Override
     public boolean canBePlacedOnPlate() {
-        return true; // Pizza valid ditaruh di piring
+        return true;
     }
 
-    // ==========================================
-    // GETTER & SETTER
-    // ==========================================
+    // Getters & Setters
 
     public IngredientState getState() {
         return state;
@@ -125,7 +97,7 @@ public class Pizza extends Item implements Preparable {
         return cookingDuration;
     }
 
-    // Helper untuk UI/Render (Mendapatkan progress bar masak 0.0 - 1.0)
+    // Progress bar buat UI (0.0 - 1.0)
     public float getCookProgress() {
         if (state == IngredientState.BURNED)
             return 1.0f;

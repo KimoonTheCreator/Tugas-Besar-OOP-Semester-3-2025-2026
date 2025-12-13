@@ -14,34 +14,24 @@ public class ServingCounter extends Station {
 
     @Override
     public void interact(Chef chef) {
-        // Cek apakah Chef membawa item
-        if (chef.isHoldingItem()) {
-            // Cek apakah item tersebut adalah Piring
-            if (chef.getInventory() instanceof Plate) {
-                Plate piring = (Plate) chef.getInventory();
+        if (!chef.isHoldingItem())
+            return;
+        if (!(chef.getInventory() instanceof Plate))
+            return;
 
-                // Cek apakah piring berisi makanan (tidak kosong)
-                if (!piring.getContents().isEmpty()) {
-                    // Logic baru: Simpan piring di ServingCounter
-                    // Agar GameController bisa mengambilnya via getServedPlate()
-                    this.servedPlate = piring;
+        Plate piring = (Plate) chef.getInventory();
 
-                    // Hapus dari inventory chef
-                    chef.setInventory(null);
-
-                    // Opsional: Langsung panggil logika process (jika perlu internal logic)
-                    processServing(piring);
-                }
-            }
+        // Cek piring ada isinya
+        if (!piring.getContents().isEmpty()) {
+            this.servedPlate = piring;
+            chef.setInventory(null);
+            processServing(piring);
         }
     }
 
     private void processServing(Plate piring) {
-        // Logic internal jika diperlukan, misalnya notifikasi visual atau sound
         System.out.println("Plate placed on Serving Counter!");
     }
-
-    // --- Added Methods for GameController ---
 
     public Plate getServedPlate() {
         return servedPlate;

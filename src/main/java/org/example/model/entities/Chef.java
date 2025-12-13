@@ -9,17 +9,16 @@ import org.example.model.stations.Station;
 import org.example.model.entities.GameObject;
 
 /**
- * Kelas Chef yang merepresentasikan karakter pemain
- * Chef bisa bergerak, mengambil item, dan berinteraksi dengan station
+ * Class Chef - karakter yang dikontrol player
  */
 public class Chef extends GameObject {
     private String id;
     private String name;
     private Direction direction;
-    private Item inventory; // Barang yang dipegang
+    private Item inventory;
     private ChefState state;
     private boolean isActive;
-    private boolean isMoving = false; // Flag for smooth movement animation
+    private boolean isMoving = false;
 
     // Dash properties
     private long lastDashTime = 0;
@@ -36,26 +35,15 @@ public class Chef extends GameObject {
         this.isActive = false;
     }
 
-    // ==========================================
-    // 1. FITUR MOVEMENT (Dari Fathan) - YANG HILANG
-    // ==========================================
+    // Movement
     public void move(Direction dir) {
-        // Update koordinat posisi
         int newX = this.position.getX() + dir.getDx();
         int newY = this.position.getY() + dir.getDy();
-
-        // Kita update object position-nya
         this.position = new Position(newX, newY);
-
-        // Update state visual
         this.state = ChefState.MOVE;
     }
 
-    // ==========================================
-    // 2. FITUR INTERAKSI (Dari Anda)
-    // ==========================================
-
-    // Method Helper: Ambil item (Pickup)
+    // Item handling
     public void setInventory(Item item) {
         this.inventory = item;
         this.state = ChefState.HOLDING_ITEM;
@@ -73,9 +61,7 @@ public class Chef extends GameObject {
         return this.inventory != null;
     }
 
-    // ==========================================
-    // 3. GETTERS & SETTERS (Wajib Ada)
-    // ==========================================
+    // Getters & Setters
     public String getId() {
         return id;
     }
@@ -88,7 +74,6 @@ public class Chef extends GameObject {
         return position;
     }
 
-    // Helper untuk GameController biar gampang akses X/Y
     public int getX() {
         return position.getX();
     }
@@ -157,6 +142,6 @@ public class Chef extends GameObject {
     }
 
     public void update(double deltaTime) {
-        // Logic update per frame jika diperlukan (misal: animasi)
+        // Per-frame update (animasi, dll)
     }
 }

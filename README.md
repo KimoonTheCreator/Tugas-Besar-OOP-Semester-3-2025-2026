@@ -2,10 +2,6 @@
 
 <div align="center">
 
-![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![JavaFX](https://img.shields.io/badge/JavaFX-21-1572B6?style=for-the-badge&logo=java&logoColor=white)
-![Gradle](https://img.shields.io/badge/Gradle-8.x-02303A?style=for-the-badge&logo=gradle&logoColor=white)
-
 **Tugas Besar Object Oriented Programming**  
 *Sistem dan Teknologi Informasi - Semester 3 (2025/2026)*
 
@@ -224,6 +220,11 @@ src/main/java/org/example/
 ## 👥 Tim Pengembang
 
 Tugas Besar OOP - STI ITB 2025/2026
+18224032 Claudia Melati Krid
+18224034 Wa Ode Amerta Lambelu. J
+18224076 Bram Sebastian Pangaribuan
+18224084 Muhammad Ghiffary Alfathan
+
 
 ---
 
