@@ -2,40 +2,36 @@
 
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>  <?import javafx.scene.layout.VBox?>
 
 <AnchorPane fx:id="pauseRoot" fx:controller="org.example.controller.PauseMenuController"
             xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/21"
-            style="-fx-background-color: rgba(0, 0, 0, 0.75);" prefHeight="600.0" prefWidth="700.0">
+            style="-fx-background-color: rgba(0, 0, 0, 0.75);" 
+            prefHeight="600.0" prefWidth="700.0">
 
-    <ImageView fx:id="backgroundView" 
-               fitHeight="600.0" 
-               fitWidth="700.0" 
-               AnchorPane.topAnchor="0.0" 
-               AnchorPane.rightAnchor="0.0" 
-               AnchorPane.bottomAnchor="0.0" 
-               AnchorPane.leftAnchor="0.0"/>
-    
-    <VBox alignment="CENTER" spacing="20.0" 
-          AnchorPane.topAnchor="150.0" 
-          AnchorPane.bottomAnchor="150.0" 
-          AnchorPane.leftAnchor="200.0"
-          AnchorPane.rightAnchor="200.0">
+    <StackPane alignment="CENTER"
+               AnchorPane.topAnchor="0.0"
+               AnchorPane.rightAnchor="0.0"
+               AnchorPane.bottomAnchor="0.0"
+               AnchorPane.leftAnchor="0.0">
 
-        <ImageView fx:id="titleView" fitWidth="300.0" preserveRatio="true"/>
+        <ImageView fx:id="backgroundView"/>
+        <VBox alignment="CENTER" spacing="20.0" maxWidth="300.0">
+            <ImageView fx:id="titleView" fitWidth="250.0" preserveRatio="true"/>
 
-        <ImageView fx:id="resumeButtonView"
-                   onMouseClicked="#handleResumeButton"
-                   styleClass="menu-button"/>
+            <ImageView fx:id="resumeButtonView"
+                       onMouseClicked="#handleResumeButton"
+                       styleClass="menu-button"/>
 
-        <ImageView fx:id="tutorialButtonView"
-                   onMouseClicked="#handleTutorialButton"
-                   styleClass="menu-button"/>
-                   
-        <ImageView fx:id="quitButtonView"
-                   onMouseClicked="#handleQuitButton"
-                   styleClass="menu-button"/>
-                   
-    </VBox>
+            <ImageView fx:id="tutorialButtonView"
+                       onMouseClicked="#handleTutorialButton"
+                       styleClass="menu-button"/>
+                       
+            <ImageView fx:id="quitButtonView"
+                       onMouseClicked="#handleQuitButton"
+                       styleClass="menu-button"/>
+                       
+        </VBox>
+    </StackPane>
 </AnchorPane>
