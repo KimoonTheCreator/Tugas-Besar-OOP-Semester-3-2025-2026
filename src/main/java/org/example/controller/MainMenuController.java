@@ -31,11 +31,13 @@ public class MainMenuController {
     @FXML
     private StackPane levelSelectPane;
     @FXML
-    private Button easyButton;
+    private ImageView difficultyTitleView;
     @FXML
-    private Button mediumButton;
+    private ImageView easyButtonView;
     @FXML
-    private Button hardButton;
+    private ImageView mediumButtonView; 
+    @FXML
+    private ImageView hardButtonView; 
     @FXML
     private Button backButton;
 
@@ -70,13 +72,37 @@ public class MainMenuController {
             if (quitNormal != null)
                 setupButtonEffects(quitButtonView, "quit", quitNormal);
 
-            // Bind Level Select Actions
-            if (easyButton != null)
-                easyButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.EASY));
-            if (mediumButton != null)
-                mediumButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.MEDIUM));
-            if (hardButton != null)
-                hardButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.HARD));
+            Image titleDiff = loadButtonImage(null, "selectdifficulty"); // Asumsi nama file: selectdifficulty.png
+            if (difficultyTitleView != null && titleDiff != null)
+                difficultyTitleView.setImage(titleDiff);
+
+            Image easyNormal = loadButtonImage(easyButtonView, "easy"); // Asumsi nama file: easy.png
+            if (easyNormal != null) {
+                easyButtonView.setImage(easyNormal);
+                setupButtonEffects(easyButtonView, "easy", easyNormal);
+            }
+            
+            Image mediumNormal = loadButtonImage(mediumButtonView, "medium"); // Asumsi nama file: medium.png
+            if (mediumNormal != null) {
+                mediumButtonView.setImage(mediumNormal);
+                setupButtonEffects(mediumButtonView, "medium", mediumNormal);
+            }
+
+            Image hardNormal = loadButtonImage(hardButtonView, "hard"); // Asumsi nama file: hard.png
+            if (hardNormal != null) {
+                hardButtonView.setImage(hardNormal);
+                setupButtonEffects(hardButtonView, "hard", hardNormal);
+            }
+
+            
+
+            // // Bind Level Select Actions
+            // if (easyButton != null)
+            //     easyButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.EASY));
+            // if (mediumButton != null)
+            //     mediumButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.MEDIUM));
+            // if (hardButton != null)
+            //     hardButton.setOnAction(e -> startGameWithDifficulty(GameDifficulty.HARD));
             if (backButton != null)
                 backButton.setOnAction(e -> levelSelectPane.setVisible(false));
 
@@ -84,6 +110,21 @@ public class MainMenuController {
             System.err.println("Terjadi kesalahan tak terduga saat inisialisasi Main Menu.");
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void handleEasyButton(MouseEvent event) {
+        startGameWithDifficulty(GameDifficulty.EASY);
+    }
+
+    @FXML
+    private void handleMediumButton(MouseEvent event) {
+        startGameWithDifficulty(GameDifficulty.MEDIUM);
+    }
+
+    @FXML
+    private void handleHardButton(MouseEvent event) {
+        startGameWithDifficulty(GameDifficulty.HARD);
     }
 
     private Image loadButtonImage(ImageView view, String id) {

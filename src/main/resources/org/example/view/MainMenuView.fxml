@@ -41,29 +41,35 @@
     </VBox>
 
     <!-- LEVEL SELECT POPUP OVERLAY -->
-    <StackPane fx:id="levelSelectPane" visible="false" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" style="-fx-background-color: rgba(0,0,0,0.5);">
-         <!-- Popup Container -->
-         <AnchorPane maxWidth="400" maxHeight="300">
-              <ImageView fitWidth="400" fitHeight="300" preserveRatio="false">
+    <StackPane fx:id="levelSelectPane" visible="false" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" style="-fx-background-color: rgba(0,0,0,0.75);">
+         <AnchorPane maxWidth="450" maxHeight="350">
+              <ImageView fitWidth="450" fitHeight="350" preserveRatio="false">
                     <image>
                         <javafx.scene.image.Image url="@../../../../res/ui/menu_popup.png"/>
                     </image>
               </ImageView>
               
-              <VBox alignment="CENTER" spacing="10.0" AnchorPane.topAnchor="60.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
-                    <javafx.scene.control.Label text="SELECT DIFFICULTY" style="-fx-font-size: 24px; -fx-font-family: 'Segoe UI Black'; -fx-text-fill: #5c3c1e; -fx-effect: dropshadow(gaussian, white, 2, 0, 0, 0);"/>
+              <VBox alignment="CENTER" spacing="20.0" AnchorPane.topAnchor="60.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+                    <ImageView fx:id="difficultyTitleView" 
+                               fitWidth="300.0" 
+                               preserveRatio="true"/>
                     
-                    <javafx.scene.control.Button fx:id="easyButton" text="EASY" prefWidth="200.0" 
-                            style="-fx-background-color: #8fbc8f; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-border-color: #5c3c1e; -fx-border-width: 2; -fx-border-radius: 20; -fx-cursor: hand;"/>
+                    <ImageView fx:id="easyButtonView" 
+                            onMouseClicked="#handleEasyButton"
+                            fitWidth="180.0" preserveRatio="true"
+                            style="-fx-cursor: hand;"/>
                     
-                    <javafx.scene.control.Button fx:id="mediumButton" text="MEDIUM" prefWidth="200.0" 
-                            style="-fx-background-color: #ffd700; -fx-text-fill: #5c3c1e; -fx-font-weight: bold; -fx-background-radius: 20; -fx-border-color: #5c3c1e; -fx-border-width: 2; -fx-border-radius: 20; -fx-cursor: hand;"/>
+                    <ImageView fx:id="mediumButtonView" 
+                            onMouseClicked="#handleMediumButton"
+                            fitWidth="180.0" preserveRatio="true"
+                            style="-fx-cursor: hand;"/>
+
+                    <ImageView fx:id="hardButtonView" 
+                            onMouseClicked="#handleHardButton"
+                            fitWidth="180.0" preserveRatio="true"
+                            style="-fx-cursor: hand;"/>
                     
-                    <javafx.scene.control.Button fx:id="hardButton" text="HARD" prefWidth="200.0" 
-                            style="-fx-background-color: #ff6347; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-border-color: #5c3c1e; -fx-border-width: 2; -fx-border-radius: 20; -fx-cursor: hand;"/>
-                    
-                    <javafx.scene.control.Button fx:id="backButton" text="BACK" prefWidth="120.0" 
-                            style="-fx-background-color: transparent; -fx-text-fill: #5c3c1e; -fx-font-weight: bold; -fx-underline: true; -fx-cursor: hand;"/>
+                    <Button fx:id="backButton" text="BACK" prefWidth="120.0" style="-fx-background-color: transparent; -fx-text-fill: #FDEDBC; -fx-font-weight: bold; -fx-underline: true; -fx-cursor: hand;"/>
               </VBox>
          </AnchorPane>
     </StackPane>

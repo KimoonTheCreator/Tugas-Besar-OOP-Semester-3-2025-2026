@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -10,80 +12,56 @@
             xmlns="http://javafx.com/javafx/21" 
             xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="org.example.controller.StageOverController"
-            style="-fx-background-color: rgba(50, 0, 0, 0.9);" 
+            style="-fx-background-color: rgba(0, 0, 0, 0.75);" 
             prefHeight="600.0" prefWidth="700.0">
 
-    <!-- Background Image -->
-    <ImageView fx:id="backgroundView" 
-               fitHeight="600.0" 
-               fitWidth="700.0" 
-               AnchorPane.topAnchor="0.0" 
-               AnchorPane.rightAnchor="0.0" 
-               AnchorPane.bottomAnchor="0.0" 
-               AnchorPane.leftAnchor="0.0"
-               opacity="0.5"/>
+    <StackPane AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0" 
+               AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
 
-    <VBox alignment="CENTER" spacing="15.0" 
-          AnchorPane.topAnchor="80.0" 
-          AnchorPane.bottomAnchor="80.0" 
-          AnchorPane.leftAnchor="100.0"
-          AnchorPane.rightAnchor="100.0">
+        <AnchorPane maxWidth="450.0" maxHeight="500.0"> 
+            
+            <ImageView fx:id="popupBackgroundView" fitWidth="450.0" fitHeight="500.0">
+                 <image>
+                    <Image url="@../../../../res/ui/menu_popup.png"/> 
+                </image>
+            </ImageView>
 
-        <!-- Title (PASSED / FAILED) -->
-        <Label fx:id="titleLabel" text="STAGE OVER" textFill="#FFFFFF">
-            <font>
-                <Font name="System Bold" size="36.0" />
-            </font>
-        </Label>
-
-        <!-- Reason (TIME'S UP / TOO MANY FAILS) -->
-        <Label fx:id="reasonLabel" text="" textFill="#FFCC00">
-             <font>
-                <Font name="System Bold" size="20.0" />
-            </font>
-        </Label>
-
-        <!-- Score Display -->
-        <Label fx:id="scoreLabel" text="Final Score: 0" textFill="#FFFFFF">
-             <font>
-                <Font name="System Bold" size="24.0" />
-            </font>
-        </Label>
-
-        <!-- Status Message -->
-        <Label fx:id="statusLabel" text="" textFill="#AAAAAA" wrapText="true" maxWidth="400.0" alignment="CENTER">
-             <font>
-                <Font size="14.0" />
-            </font>
-        </Label>
+            <VBox alignment="CENTER" spacing="10.0" 
+                  AnchorPane.topAnchor="50.0" 
+                  AnchorPane.bottomAnchor="30.0" 
+                  AnchorPane.leftAnchor="50.0"
+                  AnchorPane.rightAnchor="50.0">
         
-        <!-- Spacer -->
-        <VBox prefHeight="20.0" />
+                <ImageView fx:id="titleImageView" 
+                           fitWidth="300.0" 
+                           preserveRatio="true"/> 
+                
+                <Label fx:id="reasonLabel" text="[Reason/Alasan]" textFill="#FFCC00" wrapText="true">
+                    <font><Font name="System Bold" size="18.0" /></font>
+                </Label>
 
-        <!-- Buttons -->
-        <!-- Restart Button -->
-        <ImageView fx:id="restartButtonView"
-                   pickOnBounds="true"
-                   preserveRatio="true"
-                   fitWidth="180.0"
-                   onMouseClicked="#handleRestart"
-                   style="-fx-cursor: hand;"/>
-        
-        <Label text="🔄 PLAY AGAIN" textFill="WHITE">
-            <font><Font size="14.0"/></font>
-        </Label>
+                <Label fx:id="scoreLabel" text="Final Score: 0 / 0 (minimum)" textFill="#FFFFFF">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Label>
+                
+                <Label fx:id="statusLabel" text="[Status Message]" textFill="#AAAAAA" wrapText="true" maxWidth="300.0" alignment="CENTER">
+                    <font><Font size="14.0" /></font>
+                </Label>
+                
+                <VBox prefHeight="10.0" />
 
-        <!-- Main Menu Button -->
-        <ImageView fx:id="mainMenuButtonView"
-                   pickOnBounds="true"
-                   preserveRatio="true"
-                   fitWidth="180.0"
-                   onMouseClicked="#handleMainMenu"
-                   style="-fx-cursor: hand;"/>
-                   
-        <Label text="🏠 MAIN MENU" textFill="WHITE">
-             <font><Font size="14.0"/></font>
-        </Label>
+                <ImageView fx:id="restartButtonView"
+                           onMouseClicked="#handleRestart"
+                           fitWidth="200.0" preserveRatio="true"
+                           style="-fx-cursor: hand;"/>
+                           
+                
+                <ImageView fx:id="mainMenuButtonView"
+                           onMouseClicked="#handleMainMenu"
+                           fitWidth="200.0" preserveRatio="true"
+                           style="-fx-cursor: hand;"/>
 
-    </VBox>
+            </VBox>
+        </AnchorPane>
+    </StackPane>
 </AnchorPane>
