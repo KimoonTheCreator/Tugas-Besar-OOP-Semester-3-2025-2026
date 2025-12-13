@@ -12,6 +12,12 @@ import javafx.scene.layout.*;
 import javafx.scene.layout.StackPane; // Explicit import just in case
 import javafx.stage.Stage;
 import javafx.geometry.Pos;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.animation.TranslateTransition;
+import javafx.util.Duration;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.example.model.entities.Chef;
 import org.example.model.map.Direction;
@@ -57,6 +63,9 @@ public class GameController {
     private AnchorPane gameRoot;
     @FXML
     private VBox ordersContainer;
+
+    // --- INPUT STATE ---
+    private final Set<KeyCode> activeKeys = new HashSet<>();
 
     // --- GAME STATE ---
     private final GameMap gameMap;
@@ -243,6 +252,47 @@ public class GameController {
         this.isFinished = false;
         this.isPaused = false;
 
+        // RESET MAP STATE (Fix Bug: Map not resetting)
+        for (int y = 0; y < gameMap.getHeight(); y++) {
+            for (int x = 0; x < gameMap.getWidth(); x++) {
+                org.example.model.map.Tile tile = gameMap.getTile(x, y);
+                if (tile.hasStation()) {
+                    // Clear logical item
+                    tile.getStation().removeItem();
+                    
+                    // Clear visual item
+                    ImageView itemView = stationItemViews.get(new Position(x, y));
+                    if (itemView != null) {
+                        itemView.setImage(null);
+                    }
+                }
+            }
+        }
+        
+        // Reset Chefs Position
+        List<Position> spawnPoints = gameMap.getSpawnPoints();
+        if (!chefs.isEmpty() && !spawnPoints.isEmpty()) {
+            Chef c1 = chefs.get(0);
+            Position s1 = spawnPoints.get(0);
+            c1.setPosition(new Position(s1.getX(), s1.getY()));
+            c1.setDirection(Direction.DOWN);
+            c1.setInventory(null);
+            updateChefPositionInView(c1);
+            updateChefDirectionView(c1);
+            updateChefHeldItem(c1);
+            
+            if (chefs.size() > 1 && spawnPoints.size() > 1) {
+                Chef c2 = chefs.get(1);
+                Position s2 = spawnPoints.get(1);
+                c2.setPosition(new Position(s2.getX(), s2.getY()));
+                c2.setDirection(Direction.DOWN);
+                c2.setInventory(null);
+                updateChefPositionInView(c2);
+                updateChefDirectionView(c2);
+                updateChefHeldItem(c2);
+            }
+        }
+
         // Reset Order State
         this.activeOrders.clear();
         this.orderViews.clear();
@@ -281,6 +331,7 @@ public class GameController {
                 lastTime = now;
 
                 // --- UPDATE LOGIC ---
+                processInput(deltaTime);
                 updateGameLogic(deltaTime);
 
                 // --- UPDATE VISUALS ---
@@ -434,25 +485,109 @@ public class GameController {
     // 3. INPUT HANDLING
     // =========================================================
 
+    public void handleKeyPressed(KeyEvent event) {
+        if (activeKeys.contains(event.getCode())) return; // Prevent repeated triggers from OS key repeat if desired, or remove this line
+        activeKeys.add(event.getCode());
+
+        switch (event.getCode()) {
+            case TAB:
+                switchChef();
+                break;
+            case F:
+                handlePickupCommand();
+                break;
+            case V:
+                handleInteractCommand();
+                break;
+            case SPACE:
+                handleDashCommand();
+                break;
+            case ESCAPE:
+                handlePauseCommand();
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void handleKeyReleased(KeyEvent event) {
+        activeKeys.remove(event.getCode());
+    }
+
+    private void processInput(double deltaTime) {
+         if (isPaused || isFinished) return;
+
+         Chef activeChef = getActiveChef();
+         if (activeChef.isMoving()) return; // Don't interrupt movement
+
+         Direction moveDir = null;
+         if (activeKeys.contains(KeyCode.W) || activeKeys.contains(KeyCode.UP)) {
+             moveDir = Direction.UP;
+         } else if (activeKeys.contains(KeyCode.S) || activeKeys.contains(KeyCode.DOWN)) {
+             moveDir = Direction.DOWN;
+         } else if (activeKeys.contains(KeyCode.A) || activeKeys.contains(KeyCode.LEFT)) {
+             moveDir = Direction.LEFT;
+         } else if (activeKeys.contains(KeyCode.D) || activeKeys.contains(KeyCode.RIGHT)) {
+             moveDir = Direction.RIGHT;
+         }
+
+         if (moveDir != null) {
+             handleMoveCommand(moveDir);
+         }
+    }
+
     public void handleMoveCommand(Direction dir) {
         if (isPaused || isFinished)
             return;
 
         Chef activeChef = getActiveChef();
-        int newX = activeChef.getX() + dir.getDx();
-        int newY = activeChef.getY() + dir.getDy();
-
-        // 1. Ganti Arah
+        
+        // 1. Ganti Arah (Always update direction first)
         if (!activeChef.getDirection().equals(dir)) {
             activeChef.setDirection(dir);
             updateChefDirectionView(activeChef);
-            return;
+            // Don't return here, allow movement if possible
         }
+
+        if (activeChef.isMoving()) return;
+
+        int newX = activeChef.getX() + dir.getDx();
+        int newY = activeChef.getY() + dir.getDy();
 
         // 2. Cek Collision & Move
         if (gameMap.isWalkable(newX, newY) && !isOccupied(newX, newY)) {
-            activeChef.move(dir);
-            updateChefPositionInView(activeChef);
+            moveChefSmoothly(activeChef, dir);
+        }
+    }
+
+    private void moveChefSmoothly(Chef chef, Direction dir) {
+        chef.setMoving(true);
+        
+        // 1. Update Logical Position Immediately (to reserve the tile)
+        int oldX = chef.getX();
+        int oldY = chef.getY();
+        chef.move(dir); // Updates logical X,Y
+        
+        // 2. Visual Update: Move StackPane to NEW grid position
+        updateChefPositionInView(chef);
+        
+        // 3. Animate: Translate from OLD position (relative to new) to 0
+        StackPane chefView = chefViews.get(chef);
+        if (chefView != null) {
+            // Calculate offset: (Old - New) * TILE_SIZE
+            double startX = -dir.getDx() * AssetManager.TILE_SIZE;
+            double startY = -dir.getDy() * AssetManager.TILE_SIZE;
+            
+            chefView.setTranslateX(startX);
+            chefView.setTranslateY(startY);
+            
+            TranslateTransition tt = new TranslateTransition(Duration.millis(200), chefView);
+            tt.setToX(0);
+            tt.setToY(0);
+            tt.setOnFinished(e -> chef.setMoving(false));
+            tt.play();
+        } else {
+            chef.setMoving(false); // Fallback
         }
     }
 

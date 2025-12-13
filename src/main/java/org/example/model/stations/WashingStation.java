@@ -23,22 +23,23 @@ public class WashingStation extends Station {
             return;
         }
 
-        // Cek Piring Kotor
-        if (isEmpty() && chef.isHoldingItem() && chef.getInventory() instanceof Plate) {
-            Plate p = (Plate) chef.getInventory();
-            if (!p.isClean()) {
-               if (this.isEmpty() && chef.isHoldingItem()) {
+        // 1. Jika Station KOSONG: Cuma terima Piring Kotor
+        if (this.isEmpty()) {
+            if (chef.isHoldingItem() && chef.getInventory() instanceof Plate) {
+                Plate p = (Plate) chef.getInventory();
+                if (!p.isClean()) {
                     this.addItem(chef.dropItem());
-               } else if (!this.isEmpty() && !chef.isHoldingItem()) {
-                    chef.setInventory(this.removeItem());
-               }
-            } else {
-                System.out.println("Piring sudah bersih!");
+                } else {
+                    System.out.println("Hanya piring kotor yang bisa dicuci!");
+                }
+            } else if (chef.isHoldingItem()) {
+                System.out.println("Washing Station hanya menerima Piring Kotor!");
             }
-        }else if (this.isEmpty() && chef.isHoldingItem()) {
-            this.addItem(chef.dropItem());
-        } else if (!this.isEmpty() && !chef.isHoldingItem()) {
+        } 
+        // 2. Jika Station ADA ITEM (Pasti Piring Kotor/Bersih): Ambil
+        else if (!this.isEmpty() && !chef.isHoldingItem()) {
             chef.setInventory(this.removeItem());
+            cancelWashing(); // Reset state jika diambil pas lagi dicuci
         }
     }
 

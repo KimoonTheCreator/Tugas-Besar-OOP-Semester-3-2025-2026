@@ -154,43 +154,8 @@ public class MainMenuController {
             gameController.startGame(difficulty);
 
             // 2. PASANG INPUT KEYBOARD PADA GAME SCENE
-            gameScene.setOnKeyPressed(e -> {
-                javafx.scene.input.KeyCode code = e.getCode();
-                switch (code) {
-                    case W:
-                    case UP:
-                        gameController.handleMoveCommand(org.example.model.map.Direction.UP);
-                        break;
-                    case A:
-                    case LEFT:
-                        gameController.handleMoveCommand(org.example.model.map.Direction.LEFT);
-                        break;
-                    case S:
-                    case DOWN:
-                        gameController.handleMoveCommand(org.example.model.map.Direction.DOWN);
-                        break;
-                    case D:
-                    case RIGHT:
-                        gameController.handleMoveCommand(org.example.model.map.Direction.RIGHT);
-                        break;
-                    case TAB:
-                        gameController.switchChef();
-                        break;
-                    case F:
-                        gameController.handlePickupCommand(); // PICKUP / TARUH (F)
-                        break;
-                    case V:
-                        gameController.handleInteractCommand(); // INTERACT / PROCESS (V)
-                        break;
-                    case SPACE:
-                        gameController.handleDashCommand();
-                        break;
-                    case ESCAPE:
-                        gameController.handlePauseCommand();
-                        break; // Handler Pause Menu
-                    default:
-                }
-            });
+            gameScene.setOnKeyPressed(gameController::handleKeyPressed);
+            gameScene.setOnKeyReleased(gameController::handleKeyReleased);
 
             // 3. Ganti Scene
             stage.setScene(gameScene);

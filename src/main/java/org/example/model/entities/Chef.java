@@ -19,6 +19,7 @@ public class Chef extends GameObject {
     private Item inventory; // Barang yang dipegang
     private ChefState state;
     private boolean isActive;
+    private boolean isMoving = false; // Flag for smooth movement animation
 
     // Dash properties
     private long lastDashTime = 0;
@@ -145,6 +146,14 @@ public class Chef extends GameObject {
     @Override
     public String toString() {
         return "Chef[" + name + " at " + position + "]";
+    }
+
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public void setMoving(boolean moving) {
+        isMoving = moving;
     }
 
     public void update(double deltaTime) {
