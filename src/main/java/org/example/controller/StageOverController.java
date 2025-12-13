@@ -13,25 +13,17 @@ public class StageOverController {
     private Label titleLabel;
     @FXML
     private Label scoreLabel;
-
-    // We can use ImageViews for buttons if we have assets, or just Buttons.
-    // Since PauseMenu used ImageView buttons, I'll assume we might want to stay
-    // consistent
-    // or fallback to JavaFX Buttons if assets are missing.
-    // For now, I'll use ImageView to match the user's style, but I'll use text if
-    // images fail?
-    // Actually, let's use Labels styled as buttons for simplicity and guaranteed
-    // visibility if assets are missing,
-    // OR ImageView if we assume we can reuse or use a generic "button" image.
-    // Let's stick to ImageView to be consistent with PauseMenu, but maybe use
-    // "quit" and "resume" (or similar) assets if available?
-    // "restart" might not exist. I'll check assets later. For now, let's use
-    // ImageView but be ready to error handle.
+    @FXML
+    private Label reasonLabel;
+    @FXML
+    private Label statusLabel;
 
     @FXML
-    private ImageView restartButtonView; // We'll try to load "restart.png" or reuse something
+    private ImageView restartButtonView;
     @FXML
-    private ImageView mainMenuButtonView; // Reuse "quit.png"
+    private ImageView mainMenuButtonView;
+    @FXML
+    private ImageView backgroundView;
 
     private GameController gameController;
 
@@ -39,14 +31,54 @@ public class StageOverController {
         this.gameController = controller;
     }
 
+    /**
+     * Legacy method for backwards compatibility
+     */
     public void setScore(int score) {
         if (scoreLabel != null) {
             scoreLabel.setText("Final Score: " + score);
         }
     }
 
-    @FXML
-    private ImageView backgroundView;
+    /**
+     * New method to display full stage result
+     */
+    public void setStageResult(int score, boolean passed, String reason, int minimumScore) {
+        // Update Title based on pass/fail
+        if (titleLabel != null) {
+            titleLabel.setText(passed ? "🎉 STAGE PASSED!" : "💀 STAGE FAILED!");
+            titleLabel.setStyle(passed ? "-fx-text-fill: #00ff00; -fx-font-size: 28px; -fx-font-weight: bold;"
+                    : "-fx-text-fill: #ff4444; -fx-font-size: 28px; -fx-font-weight: bold;");
+        }
+
+        // Update Score
+        if (scoreLabel != null) {
+            scoreLabel.setText("Final Score: " + score + " / " + minimumScore + " (minimum)");
+            scoreLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        }
+
+        // Update Reason
+        if (reasonLabel != null) {
+            if (!reason.isEmpty()) {
+                reasonLabel.setText(reason);
+                reasonLabel.setStyle(passed ? "-fx-text-fill: #ffcc00; -fx-font-size: 14px;"
+                        : "-fx-text-fill: #ff6666; -fx-font-size: 14px;");
+            } else {
+                reasonLabel.setText("");
+            }
+        }
+
+        // Update Status message
+        if (statusLabel != null) {
+            if (passed) {
+                statusLabel.setText("Great job! You've successfully completed this stage!");
+                statusLabel.setStyle("-fx-text-fill: #aaffaa; -fx-font-size: 12px;");
+            } else {
+                statusLabel.setText("Try again! You need at least " + minimumScore + " points to pass.");
+                statusLabel.setStyle("-fx-text-fill: #ffaaaa; -fx-font-size: 12px;");
+            }
+        }
+    }
 
     @FXML
     public void initialize() {

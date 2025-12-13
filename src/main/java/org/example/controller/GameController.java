@@ -84,6 +84,11 @@ public class GameController {
     private double timeSinceLastOrder = 0;
     private static final double ORDER_SPAWN_INTERVAL = 15.0; // Seconds
 
+    // --- STAGE END CONDITIONS ---
+    private int consecutiveFailedOrders = 0;
+    private String stageEndReason = "";
+    private boolean stagePassed = false;
+
     // --- ENGINE & VISUALS ---
     private AnimationTimer gameLoop;
     // Map untuk visual Chef (Sekarang StackPane biar bisa ada Item di atas Chef)
@@ -251,6 +256,9 @@ public class GameController {
         this.score = 0;
         this.isFinished = false;
         this.isPaused = false;
+        this.consecutiveFailedOrders = 0;
+        this.stageEndReason = "";
+        this.stagePassed = false;
 
         // RESET MAP STATE (Fix Bug: Map not resetting)
         for (int y = 0; y < gameMap.getHeight(); y++) {
@@ -259,7 +267,7 @@ public class GameController {
                 if (tile.hasStation()) {
                     // Clear logical item
                     tile.getStation().removeItem();
-                    
+
                     // Clear visual item
                     ImageView itemView = stationItemViews.get(new Position(x, y));
                     if (itemView != null) {
@@ -268,7 +276,7 @@ public class GameController {
                 }
             }
         }
-        
+
         // Reset Chefs Position
         List<Position> spawnPoints = gameMap.getSpawnPoints();
         if (!chefs.isEmpty() && !spawnPoints.isEmpty()) {
@@ -280,7 +288,7 @@ public class GameController {
             updateChefPositionInView(c1);
             updateChefDirectionView(c1);
             updateChefHeldItem(c1);
-            
+
             if (chefs.size() > 1 && spawnPoints.size() > 1) {
                 Chef c2 = chefs.get(1);
                 Position s2 = spawnPoints.get(1);
@@ -346,7 +354,8 @@ public class GameController {
         stageTimeRemaining -= deltaTime;
         if (stageTimeRemaining <= 0) {
             stageTimeRemaining = 0;
-            finishStage();
+            stageEndReason = "TIME'S UP!";
+            evaluateStageResult();
         }
 
         // 2. Chef Cooldowns (Dash, etc)
@@ -442,12 +451,12 @@ public class GameController {
 
             for (Order order : activeOrders) {
                 System.out.println(" - Checking against: " + order.getDish().getName());
-                
+
                 // servedPizza.getName() returns "Pizza Margherita"
                 // order.getDish().getName() returns "Margherita"
                 // So we need to match: "Pizza " + orderName == servedName
                 String expectedPizzaName = "Pizza " + order.getDish().getName();
-                
+
                 if (expectedPizzaName.equals(servedPizza.getName())
                         && servedPizza.getState() == org.example.model.enums.IngredientState.COOKED) {
                     matchingOrder = order;
@@ -456,11 +465,13 @@ public class GameController {
             }
 
             if (matchingOrder != null) {
-                // SUCCESS
+                // SUCCESS - Reset consecutive fails
+                consecutiveFailedOrders = 0;
                 score += matchingOrder.getReward();
                 activeOrders.remove(matchingOrder);
                 removeOrderView(matchingOrder);
-                System.out.println("ORDER SERVED! +Points: " + matchingOrder.getReward());
+                System.out
+                        .println("ORDER SERVED! +Points: " + matchingOrder.getReward() + " | Consecutive Fails Reset!");
             } else {
                 // WRONG ORDER / BURNT - No matching order found
                 System.out.println("VALIDATION FAILED for " + servedPizza.getName());
@@ -468,7 +479,19 @@ public class GameController {
                 score += wrongDishPenalty;
                 if (score < 0)
                     score = 0;
-                System.out.println("WRONG DISH! Penalty: " + wrongDishPenalty);
+
+                // Track consecutive fails for wrong dish
+                consecutiveFailedOrders++;
+                System.out.println("WRONG DISH! Penalty: " + wrongDishPenalty + " | Consecutive Fails: "
+                        + consecutiveFailedOrders);
+
+                // Check if too many consecutive fails
+                if (currentDifficulty != null
+                        && consecutiveFailedOrders >= currentDifficulty.getMaxConsecutiveFails()) {
+                    stageEndReason = "TOO MANY FAILED ORDERS!";
+                    stagePassed = false;
+                    finishStage();
+                }
             }
 
             // Logic Return:
@@ -486,7 +509,8 @@ public class GameController {
     // =========================================================
 
     public void handleKeyPressed(KeyEvent event) {
-        if (activeKeys.contains(event.getCode())) return; // Prevent repeated triggers from OS key repeat if desired, or remove this line
+        if (activeKeys.contains(event.getCode()))
+            return; // Prevent repeated triggers from OS key repeat if desired, or remove this line
         activeKeys.add(event.getCode());
 
         switch (event.getCode()) {
@@ -515,25 +539,27 @@ public class GameController {
     }
 
     private void processInput(double deltaTime) {
-         if (isPaused || isFinished) return;
+        if (isPaused || isFinished)
+            return;
 
-         Chef activeChef = getActiveChef();
-         if (activeChef.isMoving()) return; // Don't interrupt movement
+        Chef activeChef = getActiveChef();
+        if (activeChef.isMoving())
+            return; // Don't interrupt movement
 
-         Direction moveDir = null;
-         if (activeKeys.contains(KeyCode.W) || activeKeys.contains(KeyCode.UP)) {
-             moveDir = Direction.UP;
-         } else if (activeKeys.contains(KeyCode.S) || activeKeys.contains(KeyCode.DOWN)) {
-             moveDir = Direction.DOWN;
-         } else if (activeKeys.contains(KeyCode.A) || activeKeys.contains(KeyCode.LEFT)) {
-             moveDir = Direction.LEFT;
-         } else if (activeKeys.contains(KeyCode.D) || activeKeys.contains(KeyCode.RIGHT)) {
-             moveDir = Direction.RIGHT;
-         }
+        Direction moveDir = null;
+        if (activeKeys.contains(KeyCode.W) || activeKeys.contains(KeyCode.UP)) {
+            moveDir = Direction.UP;
+        } else if (activeKeys.contains(KeyCode.S) || activeKeys.contains(KeyCode.DOWN)) {
+            moveDir = Direction.DOWN;
+        } else if (activeKeys.contains(KeyCode.A) || activeKeys.contains(KeyCode.LEFT)) {
+            moveDir = Direction.LEFT;
+        } else if (activeKeys.contains(KeyCode.D) || activeKeys.contains(KeyCode.RIGHT)) {
+            moveDir = Direction.RIGHT;
+        }
 
-         if (moveDir != null) {
-             handleMoveCommand(moveDir);
-         }
+        if (moveDir != null) {
+            handleMoveCommand(moveDir);
+        }
     }
 
     public void handleMoveCommand(Direction dir) {
@@ -541,7 +567,7 @@ public class GameController {
             return;
 
         Chef activeChef = getActiveChef();
-        
+
         // 1. Ganti Arah (Always update direction first)
         if (!activeChef.getDirection().equals(dir)) {
             activeChef.setDirection(dir);
@@ -549,7 +575,8 @@ public class GameController {
             // Don't return here, allow movement if possible
         }
 
-        if (activeChef.isMoving()) return;
+        if (activeChef.isMoving())
+            return;
 
         int newX = activeChef.getX() + dir.getDx();
         int newY = activeChef.getY() + dir.getDy();
@@ -562,25 +589,25 @@ public class GameController {
 
     private void moveChefSmoothly(Chef chef, Direction dir) {
         chef.setMoving(true);
-        
+
         // 1. Update Logical Position Immediately (to reserve the tile)
         int oldX = chef.getX();
         int oldY = chef.getY();
         chef.move(dir); // Updates logical X,Y
-        
+
         // 2. Visual Update: Move StackPane to NEW grid position
         updateChefPositionInView(chef);
-        
+
         // 3. Animate: Translate from OLD position (relative to new) to 0
         StackPane chefView = chefViews.get(chef);
         if (chefView != null) {
             // Calculate offset: (Old - New) * TILE_SIZE
             double startX = -dir.getDx() * AssetManager.TILE_SIZE;
             double startY = -dir.getDy() * AssetManager.TILE_SIZE;
-            
+
             chefView.setTranslateX(startX);
             chefView.setTranslateY(startY);
-            
+
             TranslateTransition tt = new TranslateTransition(Duration.millis(200), chefView);
             tt.setToX(0);
             tt.setToY(0);
@@ -699,7 +726,20 @@ public class GameController {
                 score += order.getPenalty(); // Kurangi skor
                 if (score < 0)
                     score = 0;
-                System.out.println("Order EXPIRED: " + order.getName());
+
+                // Track consecutive fails
+                consecutiveFailedOrders++;
+                System.out.println(
+                        "Order EXPIRED: " + order.getName() + " | Consecutive Fails: " + consecutiveFailedOrders);
+
+                // Check if too many consecutive fails
+                if (currentDifficulty != null
+                        && consecutiveFailedOrders >= currentDifficulty.getMaxConsecutiveFails()) {
+                    stageEndReason = "TOO MANY FAILED ORDERS!";
+                    stagePassed = false;
+                    finishStage();
+                    return;
+                }
             }
         }
 
@@ -926,12 +966,31 @@ public class GameController {
         // Game Loop handle(now) otomatis jalan lagi karena isPaused false
     }
 
+    private void evaluateStageResult() {
+        // Evaluate if stage is passed based on minimum score
+        if (currentDifficulty != null) {
+            stagePassed = score >= currentDifficulty.getMinimumScoreToPass();
+        } else {
+            stagePassed = score >= 100; // Default minimum
+        }
+        finishStage();
+    }
+
     public void finishStage() {
         if (isFinished)
             return;
         isFinished = true;
 
-        System.out.println("STAGE OVER! Score: " + score);
+        // Stop accepting new orders
+        System.out.println("========================================");
+        System.out.println("STAGE OVER!");
+        System.out.println("Reason: " + (stageEndReason.isEmpty() ? "Game Complete" : stageEndReason));
+        System.out.println("Final Score: " + score);
+        if (currentDifficulty != null) {
+            System.out.println("Minimum Score to Pass: " + currentDifficulty.getMinimumScoreToPass());
+        }
+        System.out.println("Result: " + (stagePassed ? "PASSED!" : "FAILED!"));
+        System.out.println("========================================");
 
         if (stageOverMenu == null) {
             try {
@@ -944,8 +1003,10 @@ public class GameController {
             }
         }
 
-        if (stageOverController != null)
-            stageOverController.setScore(score);
+        if (stageOverController != null) {
+            stageOverController.setStageResult(score, stagePassed, stageEndReason,
+                    currentDifficulty != null ? currentDifficulty.getMinimumScoreToPass() : 100);
+        }
 
         if (!gameRoot.getChildren().contains(stageOverMenu)) {
             gameRoot.getChildren().add(stageOverMenu);
